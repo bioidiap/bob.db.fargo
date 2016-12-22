@@ -32,6 +32,7 @@ setup(
         #    ],
         'console_scripts': [
           'extract_images.py = bob.db.fargo.scripts.extract_images:main'
+          'make_file_lists.py = bob.db.fargo.scripts.make_file_lists:main'
             ],
       },
 
