@@ -27,11 +27,11 @@ setup(
 
 
     entry_points = {
-        #'bob.db': [
-        #    'fargo = bob.db.fargo.driver:Interface',
-        #    ],
+        'bob.db': [
+            'fargo = bob.db.fargo.driver:Interface',
+            ],
         'console_scripts': [
-          'extract_images.py = bob.db.fargo.scripts.extract_images:main'
+          'extract_images.py = bob.db.fargo.scripts.extract_images:main',
           'make_file_lists.py = bob.db.fargo.scripts.make_file_lists:main'
             ],
       },

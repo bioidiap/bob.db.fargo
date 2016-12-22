@@ -1,3 +1,18 @@
-# see https://docs.python.org/3/library/pkgutil.html
-from pkgutil import extend_path
-__path__ = extend_path(__path__, __name__)
+#!/usr/bin/env python
+# encoding: utf-8
+# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
+# Thu 22 Dec 16:16:15 CET 2016
+
+
+from .query import Database
+from bob.db.bio_filelist.models import File, Client
+
+def get_config():
+  """Returns a string containing the configuration information.
+  """
+  import bob.extension
+  return bob.extension.get_config(__name__)
+
+
+# gets sphinx autodoc done right - don't remove it
+__all__ = [_ for _ in dir() if not _.startswith('_')]
