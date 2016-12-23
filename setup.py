@@ -3,7 +3,11 @@
 # Guillaume HEUSCH <guillaume.heusch@idiap.ch>
 # Mon 21 Nov 08:21:19 CET 2016
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, dist
+dist.Distribution(dict(setup_requires=['bob.extension']))
+
+from bob.extension.utils import load_requirements
+install_requires = load_requirements()
 
 # Define package version
 version = open("version.txt").read().rstrip()
@@ -25,15 +29,22 @@ setup(
     include_package_data=True,
     zip_safe=False,
 
+    install_requires=install_requires,
 
     entry_points = {
-        'bob.db': [
-            'fargo = bob.db.fargo.driver:Interface',
-            ],
         'console_scripts': [
           'extract_images.py = bob.db.fargo.scripts.extract_images:main',
           'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main'
-            ],
+        ],
+        
+        'bob.db': [
+          'fargo = bob.db.fargo.driver:Interface',
+        ],
+
+        'bob.bio.database' : [
+          'fargo = bob.db.fargo.config:database',
+        ],
+
       },
 
     install_requires=[
