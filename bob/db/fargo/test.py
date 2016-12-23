@@ -9,6 +9,14 @@
 
 import bob.db.fargo
 
+from bob.bio.base.test.test_database_implementations import check_database
+
+
+def test_voxforge():
+    db = bob.bio.base.load_resource('fargo', 'database', preferred_package='bob.db.fargo')
+    check_database(db, groups=('dev', 'eval'))
+
+
 def test_query_public_MC_RGB():
   """
   Test some queries for the public MC RGB protocol

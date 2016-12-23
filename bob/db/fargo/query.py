@@ -3,15 +3,18 @@
 # Guillaume HEUSCH <guillaume.heusch@idiap.ch>
 # Thu 22 Dec 16:20:02 CET 2016
 
-import bob.db.bio_filelist
+import bob.bio.base
+from bob.bio.face.database import FaceBioFile
 
-class Database(bob.db.bio_filelist.Database):
+class Database(bob.bio.base.database.FileListBioDatabase):
   """Wrapper class for the FARGO database for face verification
   """
 
-  def __init__(self, original_directory = None, original_extension = None):
+  def __init__(self, original_directory=None, original_extension=None):
     # call base class constructor
     from pkg_resources import resource_filename
-    lists = resource_filename(__name__, 'lists')
-    bob.db.bio_filelist.Database.__init__(self, lists, original_directory = original_directory, original_extension = original_extension)
+    folder = resource_filename(__name__, 'lists')
+    super(Database, self).__init__(folder, 'fargo', bio_file_class=FaceBioFile,
+                                   original_directory=original_directory,
+                                   original_extension=original_extension)
 
