@@ -1,0 +1,6 @@
+*pyc
+bin/
+*egg*
+parts
+src
+.*.swp
