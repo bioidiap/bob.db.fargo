@@ -1,0 +1,5 @@
+setuptools
+bob.io.base
+bob.db.base
+bob.bio.base
+bob.bio.face
