@@ -15,9 +15,9 @@
    :target: https://pypi.python.org/pypi/bob.db.fargo
 
 
-=========
+==================================
  FARGO Database Access API for Bob
-=========
+==================================
 
 This package is part of the signal-processing and machine learning toolbox
 Bob_. It contains an interface for the evaluation protocols of the FARGO 
