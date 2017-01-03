@@ -5,6 +5,7 @@
 
 
 from .query import Database
+import bob.io.image
 from bob.bio.base.database.filelist.models import FileListFile, Client
 
 def get_config():
