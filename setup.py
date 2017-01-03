@@ -47,11 +47,6 @@ setup(
 
       },
 
-    install_requires=[
-      'setuptools',
-      'bob.db.base',
-      ],
-
     classifiers=[
       'Framework :: Bob',
       'Natural Language :: English',
