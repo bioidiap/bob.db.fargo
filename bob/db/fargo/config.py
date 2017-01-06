@@ -7,7 +7,8 @@
 
 from bob.db.fargo import Database
 
-fargo_images_directory = "[YOUR_FARGO_DIRECTORY]"
+fargo_images_directory = "/idiap/project/fargo/databases/images_public/"
+fargo_annotations_directory = "/idiap/project/fargo/databases/images_public/"
 
 database_public_MC_RGB = Database(
     original_directory=fargo_images_directory,
