@@ -42,7 +42,15 @@ setup(
         ],
 
         'bob.bio.database' : [
-          'fargo = bob.db.fargo.config:database',
+          'fargo_public_MC_RGB = bob.db.fargo.config:database_public_MC_RGB',
+          'fargo_public_UD_RGB = bob.db.fargo.config:database_public_UD_RGB',
+          'fargo_public_UO_RGB = bob.db.fargo.config:database_public_UO_RGB',
+          'fargo_public_MC_NIR = bob.db.fargo.config:database_public_MC_NIR',
+          'fargo_public_UD_NIR = bob.db.fargo.config:database_public_UD_NIR',
+          'fargo_public_UO_NIR = bob.db.fargo.config:database_public_UO_NIR',
+          'fargo_public_MC_depth = bob.db.fargo.config:database_public_MC_depth',
+          'fargo_public_UD_depth = bob.db.fargo.config:database_public_UD_depth',
+          'fargo_public_UO_depth = bob.db.fargo.config:database_public_UO_depth',
         ],
 
       },
