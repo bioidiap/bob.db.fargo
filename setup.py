@@ -34,7 +34,8 @@ setup(
     entry_points = {
         'console_scripts': [
           'extract_images.py = bob.db.fargo.scripts.extract_images:main',
-          'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main'
+          'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main',
+          'extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main',
         ],
         
         'bob.db': [
