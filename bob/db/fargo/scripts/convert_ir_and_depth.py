@@ -6,11 +6,12 @@
 """Image conversion for the FARGO NIR and depth channels (%(version)s)
 
 Usage:
-  %(prog)s [--imagesdir=<path>]  
+  %(prog)s [--imagesdir=<path>] [--verbose ...] 
 
 Options:
   -h, --help                Show this screen.
   -V, --version             Show version.
+  -v, --verbose             Show info.
   -i, --imagesdir=<path>    Where to store saved images.
 
 Example:
@@ -92,11 +93,17 @@ def main(user_input=None):
         for recording in ['0', '1']:
           logger.info("===== Subject {0}, session {1}, device {2}, recording {3} ...".format(subject, session, condition, recording))
 
-          # load data
+          # load data, convert and save back
           for i in range(10):
+            
             ir_data_file = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.hdf5'.format(i))
-            print ir_data_file
+            ir_data_file_int16 = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.int16.hdf5'.format(i))
             ir_data = bob.io.base.load(ir_data_file)
+            bob.io.base.save(ir_data, ir_data_file_int16)
+            bob.io.base.save(ir_data.astype('uint8'), ir_data_file)
+            
             depth_data_file = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.hdf5'.format(i))
+            depth_data_file_int16 = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.int16.hdf5'.format(i))
             depth_data = bob.io.base.load(depth_data_file)
-            print depth_data_file
+            bob.io.base.save(depth_data, depth_data_file_int16)
+            bob.io.base.save(depth_data.astype('uint8'), depth_data_file)
