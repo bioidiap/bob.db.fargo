@@ -26,31 +26,31 @@ database_public_UO_RGB = Database(
 )
 database_public_MC_NIR = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_MC_NIR"
 )
 database_public_UD_NIR = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_UD_NIR"
 )
 database_public_UO_NIR = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_UO_NIR"
 )
 database_public_MC_depth = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_MC_depth"
 )
 database_public_UD_depth = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_UD_depth"
 )
 database_public_UO_depth = Database(
     original_directory=fargo_images_directory,
-    original_extension=".png",
+    original_extension=".hdf5",
     protocol="public_UO_depth"
 )
