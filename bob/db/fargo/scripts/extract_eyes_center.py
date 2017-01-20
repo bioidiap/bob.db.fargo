@@ -181,15 +181,21 @@ def main(user_input=None):
             reye_x, reye_y, leye_x, leye_y = get_eyes_center(color_file)
             if reye_x == 0:
               logfile.write(color_file + '(incomplete)\n')
+              logger.warn("{0} incomplete -> skipping !")
+              continue
             if bool(args['--plot']):
               frame = get_color_frame(color_dir)
               plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
 
             for i in range(0, 10):
               eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'color', '{:0>2d}.pos'.format(i))
-              eyes_file = open(eyes_filename, 'w')
-              eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
-              eyes_file.close()
+              if os.path.isfile(eyes_filename):
+                logger.info('already exists in {0}'.format(color_dir))
+                continue
+              else:
+                eyes_file = open(eyes_filename, 'w')
+                eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
+                eyes_file.close()
 
           except IOError:
             logger.warn("No annotations for recording {0}".format(color_dir))
@@ -202,14 +208,21 @@ def main(user_input=None):
             reye_x, reye_y, leye_x, leye_y = get_eyes_center(ir_file)
             if reye_x == 0:
               logfile.write(ir_file + '(incomplete)\n')
+              logger.warn("{0} incomplete -> skipping !")
+              continue
             if bool(args['--plot']):
               frame = get_data_frame(ir_dir)
               plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
 
             for i in range(0, 10):
               eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.pos'.format(i))
-              eyes_file = open(eyes_filename, 'w')
-              eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
+              if os.path.isfile(eyes_filename):
+                logger.info('already exists in {0}'.format(ir_dir))
+                continue
+              else:
+                eyes_file = open(eyes_filename, 'w')
+                eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
+                eyes_file.close()
           
           except IOError:
             logger.warn("No annotations for recording {0}".format(ir_dir))
@@ -222,14 +235,17 @@ def main(user_input=None):
             reye_x, reye_y, leye_x, leye_y = get_eyes_center(depth_file)
             if reye_x == 0:
               logfile.write(depth_file + '(incomplete)\n')
+              logger.warn("{0} incomplete -> skipping !")
+              continue
             if bool(args['--plot']):
               frame = get_data_frame(depth_dir)
               plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
 
+            eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.pos'.format(i))
             for i in range(0, 10):
-              eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.pos'.format(i))
               eyes_file = open(eyes_filename, 'w')
               eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
+              eyes_file.close()
           
           except IOError:
             logger.warn("No annotations for recording {0}".format(depth_dir))
