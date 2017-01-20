@@ -237,6 +237,23 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
       return False
   
   return True
+
+def write_bindata_as_image(data, filename, ir=True):
+
+    # rescale to 0-255
+    min_value = numpy.min(data)
+    max_value = numpy.max(data)
+    print min_value
+    print max_value
+    new_data = (data - min_value) / (max_value - min_value) * 255.0
+
+    from matplotlib import pyplot
+    if ir:
+      pyplot.imshow(data, cmap='gray')
+    else:
+      pyplot.imshow(data, cmap='bwr')
+    pyplot.show()
+
   
 def main(user_input=None):
   """
