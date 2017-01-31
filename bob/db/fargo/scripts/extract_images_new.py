@@ -290,6 +290,8 @@ def main(user_input=None):
   # go through the subjects 
   for subject in os.listdir(base_dir):
 
+    
+
     sessions = ['controlled', 'dark', 'outdoor']
     # small hack to process FdV subjects ...
     if int(subject) >= 129:
@@ -311,12 +313,16 @@ def main(user_input=None):
           if not os.path.isdir(os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth')):
             os.makedirs(os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth'))
 
+          # check if the recording has already been processed, and if so, that everything is ok  
+          if check_if_recording_is_ok(args['--imagesdir'], subject, session, condition, recording):
+            logger.info("recording already made and ok")
+            continue
+          
           # get the original data
           color_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'color')
           ir_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'ir')
           depth_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'depth')
 
-          
           # uncompress the 7z archive - both ir and depth
           ir_compressed = os.path.join(ir_dir, 'ir.7z')
           command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
@@ -386,33 +392,31 @@ def main(user_input=None):
                 diff = annotated_frame - frame
                 if numpy.any(diff):
                   logfile.write('subject {0}, session {1}, condition {2}, rec {3} -> current frame and annotated frame are different\n'.format(subject, session, condition, recording))
-                  #if bool(args['--plot']):
-                  from matplotlib import pyplot
-                  f, axarr = pyplot.subplots(1, 3)
-                  axarr[0].imshow(numpy.rollaxis(numpy.rollaxis(frame, 2),2))
-                  axarr[0].set_title("Frame in the color stream")
-                  axarr[1].imshow(numpy.rollaxis(numpy.rollaxis(annotated_frame, 2),2))
-                  axarr[1].set_title("Image provided with annotations")
-                  axarr[2].imshow(numpy.rollaxis(numpy.rollaxis(diff, 2),2))
-                  axarr[2].set_title("Difference")
-                  pyplot.show()
+                  if bool(args['--plot']):
+                    from matplotlib import pyplot
+                    f, axarr = pyplot.subplots(1, 3)
+                    axarr[0].imshow(numpy.rollaxis(numpy.rollaxis(frame, 2),2))
+                    axarr[0].set_title("Frame in the color stream")
+                    axarr[1].imshow(numpy.rollaxis(numpy.rollaxis(annotated_frame, 2),2))
+                    axarr[1].set_title("Image provided with annotations")
+                    axarr[2].imshow(numpy.rollaxis(numpy.rollaxis(diff, 2),2))
+                    axarr[2].set_title("Difference")
+                    pyplot.show()
 
               # find the closest ir frame, and save the data 
               ir_index = find_closest_frame_index(color_timestamps[toto], ir_timestamps)
               logger.debug("Closest IR frame is at {0} with index {1} (color is at {2})".format(ir_timestamps[ir_index], ir_index, color_timestamps[toto]))
-              
-
               ir_file = os.path.join(ir_dir, '{0}.bin'.format(ir_index))
               ir_data = numpy.fromfile(ir_file, dtype=numpy.int16).reshape(-1, 640)
               saved_ir = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.hdf5'.format(saved_image_index))
               bob.io.base.save(ir_data, saved_ir)
+              ir_image = ir_data / 4.0 
+              saved_ir_image = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.png'.format(saved_image_index))
+              bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
               
               # find the closest depth frame, and save the data 
               depth_index = find_closest_frame_index(color_timestamps[toto], depth_timestamps)
               logger.debug("Closest depth frame is at {0} with index {1} (color is at {2})".format(depth_timestamps[depth_index], depth_index, color_timestamps[toto]))
-              
-              # uncompress the 7z archive
-              
               depth_file = os.path.join(depth_dir, '{0}.bin'.format(depth_index))
               depth_data = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
               saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.hdf5'.format(saved_image_index))
@@ -425,7 +429,7 @@ def main(user_input=None):
                 pyplot.suptitle('frame {0} at time {1} saved'.format(toto, color_timestamps[toto]))
                 axarr[0].imshow(numpy.rollaxis(numpy.rollaxis(frame, 2),2))
                 axarr[0].set_title("Color")
-                axarr[1].imshow(ir_data, cmap='gray')
+                axarr[1].imshow(ir_image, cmap='gray')
                 axarr[1].set_title("NIR")
                 axarr[2].imshow(depth_data)
                 axarr[2].set_title("Depth")
