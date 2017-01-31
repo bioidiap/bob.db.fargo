@@ -7,7 +7,7 @@
 
 Usage:
   %(prog)s [--dbdir=<path>] [--eyesdir=<path>] 
-           [--verbose ...] [--plot]
+           [--verbose ...] [--plot] [--log=<string>]
 
 Options:
   -h, --help                Show this screen.
@@ -50,8 +50,27 @@ import bob.io.video
 import bob.ip.draw
 import bob.ip.color
 
+from ..camera import IntrinsicParameters 
+from ..camera import ExtrinsicParameters 
+from ..camera import get_UV_map
+from ..camera import get_correspondences
+
+
 def get_color_frame(annotation_dir):
+  """ get_color_frame(annotation_dir) -> frame
   
+  This function gets the color frame that corresponds to the first annotations.
+
+  **Parameters**
+
+    ``annotation_dir`` (path):
+      The dir with the annotations, and the images that were annotated
+
+  **Returns**
+
+    ``frame`` (numpy 3d array):
+      The frame where the annotation have been made
+  """
   annotated_file = os.path.join(annotation_dir, '0.264')
   if os.path.isfile(annotated_file): 
     annotated_stream = bob.io.video.reader(annotated_file)
@@ -60,57 +79,379 @@ def get_color_frame(annotation_dir):
 
 
 def get_data_frame(annotation_dir):
+  """ get_data_frame(annotation_dir) -> frame
 
+  This function gets the IR frame that corresponds to the first annotations.
+
+  **Parameters**
+
+    ``annotation_dir`` (path):
+      The dir with the annotations, and the images that were annotated
+
+  **Returns**
+
+    ``image`` (numpy 3d array):
+      The IR image (rescaled) where the annotation have been made
+  """
   bin_file = os.path.join(annotation_dir, '0.bin')
   if os.path.isfile(bin_file): 
     bin_data = numpy.fromfile(bin_file, dtype=numpy.int16).reshape(-1, 640)
-  return bin_data
+    bin_image = bin_data / 4.0
+    bin_image = bin_image.astype('uint8')
+    image = numpy.zeros((3, bin_image.shape[0], bin_image.shape[1]), 'uint8')
+    image[0] = image[1] = image[2] = bin_image
+  return image 
 
 
-def get_eyes_center(annotation_file):
+def is_annotation_complete(landmarks):
+  """ is_annotation_complete(landmarks) -> True or False
+ 
+  This function checks if the landmarks read from the provided 
+  file contain what we need to infer eyes center (i.e. eyes corner)
+  
+  **Parameters**
 
-  with open(annotation_file, "r") as c:
-    keypoints = {}
-    for line in c:
-      line = line.rstrip()
-      ints = line.split()
-      keypoints[ints[0]] = ((int(ints[2]), int(ints[1])))
+    ``landmarks`` (dict):
+     The landmarks, read from a txt file and stored as a dict 
+
+  **Returns**
+
+    ``bool`` (boolean):
+      True if all eyes corners are present, False otherwise.
+  """
+  if '1' not in landmarks.keys() or '2' not in landmarks.keys() or '3' not in landmarks.keys() or '4' not in landmarks.keys():
+    return False
+  return True
+
+
+def get_eyes_center(landmarks):
+  """ get_eyes_center(landmarks) -> eyes_center
+
+  This function computes the position of the eyes center,
+  based on eyes corners.
+
+  Note that left and right are defined wrt the imaged subject.
+
+  **Parameters**
     
-    if '1' not in keypoints.keys() or '2' not in keypoints.keys() or '3' not in keypoints.keys() or '4' not in keypoints.keys():
-      logger.warn('incomplete annotations in {0} ... '.format(annotation_file))
-      return 0,0,0,0
-    else: 
-      reye_x = int(0.5 * (keypoints['1'][1] + keypoints['2'][1]))
-      reye_y = int(0.5 * (keypoints['1'][0] + keypoints['2'][0]))
-      leye_x = int(0.5 * (keypoints['3'][1] + keypoints['4'][1]))
-      leye_y = int(0.5 * (keypoints['3'][0] + keypoints['4'][0]))
-     
-      return reye_x, reye_y, leye_x, leye_y
+    ``landmarks`` (dict):
+     The landmarks, read from a txt file and stored as a dict 
+
+  **Returns**
+
+    ``eyes_center`` (tuple):
+     Tuple containing the (x, y) position of the right and left eye. 
+  """
+  reye_x = int(0.5 * (landmarks['1'][1] + landmarks['2'][1]))
+  reye_y = int(0.5 * (landmarks['1'][0] + landmarks['2'][0]))
+  leye_x = int(0.5 * (landmarks['3'][1] + landmarks['4'][1]))
+  leye_y = int(0.5 * (landmarks['3'][0] + landmarks['4'][0]))
+  return (reye_x, reye_y, leye_x, leye_y)
 
 
 def plot_eyes_center(frame, positions):
- 
+  """ plot_eyes_center(frame, positions)
+
+  This function plots the computed eyes center on the provided image.
+  
+  **Parameters**
+    
+    ``frame`` (numpy array):
+    The frame on which to draw eyes center. 
+
+    ``positions`` (tuple):
+    The position of the center of both eyes.
+  """
+  display = draw_eyes_center(frame, positions)
+  from matplotlib import pyplot
+  pyplot.imshow(numpy.rollaxis(numpy.rollaxis(display, 2),2))
+  pyplot.title('Retrieved eyes center')
+  pyplot.show()
+
+def draw_eyes_center(frame, positions):
+  """ draw_eyes_center(frame, positions) -> frame
+
+  This function draws the computed eyes center on the provided image.
+  
+  **Parameters**
+    
+    ``frame`` (numpy array):
+    The frame on which to draw eyes center. 
+
+    ``positions`` (tuple):
+    The position of the center of both eyes.
+  """
   reye_x = positions[0]
   reye_y = positions[1]
   leye_x = positions[2]
   leye_y = positions[3]
-  if frame.dtype == 'int16':
-    frame = frame.astype('uint8')
-    frame = bob.ip.color.gray_to_rgb(frame) 
   bob.ip.draw.cross(frame, (reye_y, reye_x), 4, (255,0,0)) 
-  bob.ip.draw.cross(frame, (leye_y, leye_x), 4, (0,255,0)) 
-  from matplotlib import pyplot
-  pyplot.imshow(numpy.rollaxis(numpy.rollaxis(frame, 2),2))
-  pyplot.title('Image')
-  pyplot.show()
+  bob.ip.draw.cross(frame, (leye_y, leye_x), 4, (255,0,0)) 
+  return frame
+
+def plot_landmarks(frame, annotation_file, retrieved_landmarks):
+  """ plot_landmarks(frame, annotation_file, retrieved_landmarks)
   
+  This function draws both the original landmarks (provided in the file)
+  and the projected ones.
+   
+  **Parameters**
+    
+    ``frame`` (numpy array):
+      The frame on which to draw eyes center. 
+
+    ``annotation_file`` (path):
+      The original annotation file. 
+
+    ``retrieved_landmarks`` (dict):
+      The retrieved landmarks (i.e. they may have been obtained
+      after reprojection).
+  """
+  display = draw_landmarks(frame, annotated_file, retrieved_landmarks)
+  from matplotlib import pyplot
+  pyplot.imshow(numpy.rollaxis(numpy.rollaxis(display, 2),2))
+  pyplot.title('Original (red) and projected (green) landmarks')
+  pyplot.show()
+
+def draw_landmarks(frame, annotation_file, retrieved_landmarks):
+  """ draw_landmarks(frame, annotation_file, retrieved_landmarks) -> frame
+  
+  This function draws both the original landmarks (provided in the file)
+  and the projected ones.
+   
+  **Parameters**
+    
+    ``frame`` (numpy array):
+      The frame on which to draw eyes center. 
+
+    ``annotation_file`` (path):
+      The original annotation file. 
+
+    ``retrieved_landmarks`` (dict):
+      The retrieved landmarks (i.e. they may have been obtained
+      after reprojection).
+  """
+  original_landmarks = get_landmarks(annotation_file)
+  for i in original_landmarks.keys():
+    bob.ip.draw.plus(frame, (original_landmarks[i][0], original_landmarks[i][1]), 4, (255,0,0))
+  for i in retrieved_landmarks.keys():  
+    bob.ip.draw.cross(frame, (retrieved_landmarks[i][0], retrieved_landmarks[i][1]), 4, (0,255,0))
+  return frame 
+
+
+def read_landmarks(pos_filename):
+  """ read_landmarks(pos_filename) -> landmarks
+
+  This function read landmarks from file.
+  It is used to be compliant with camera utilities.
+  
+  **Parameters**
+    
+    ``pos_filename`` (path):
+      The original annotation file. 
+   
+   **Returns**
+
+    ``landmarks`` (numpy array (16x2)):
+      Array continaing the landmarks 
+
+  """
+  landmarks = numpy.zeros((16, 2), dtype=numpy.int32)
+  if not os.path.exists(pos_filename):
+    logging.warning('{} does not exist'.format(pos_filename))
+    return []
+  with open(pos_filename, 'r') as f:
+    for line in f:
+      line_split = line.split()
+      if len(line_split) != 3:
+        continue
+      idx = int(line_split[0])
+      landmarks[idx - 1, :] = (int(line_split[1]), int(line_split[2]))
+  return landmarks
+
+
+def load_calibration(recording_dir):
+  """ load_calibration(recording_dir) -> depth_intrinsics, color_intrinsics, depth2color 
+ 
+  This function loads camera related parameters from a file.
+
+  **Parameters**
+    
+    ``recording_dir`` (path):
+      The path to the directory corresponding to the recording. 
+   
+   **Returns**
+
+    ``depth_intrinsics`` (:class: ..camera.IntrinsicParameters):
+      Intrinsic parameters of the depth camera 
+    
+    ``color_intrinsics`` (:class: ..camera.IntrinsicParameters):
+      Intrinsic parameters of the color camera 
+
+    ``depth2color`` (:class: ..camera.ExtrinsicParameters):
+      Extrinsic parameters relating the depth to the color 
+  """
+  device_info_filepath = os.path.join(recording_dir, 'device_info.json')
+  if not os.path.exists(device_info_filepath):
+    logging.error('{} does not exist'.format(device_info_filepath))
+  depth_intrinsics = IntrinsicParameters()
+  depth_intrinsics.read_json(device_info_filepath, 'depth_intrinsics')
+  color_intrinsics = IntrinsicParameters()
+  color_intrinsics.read_json(device_info_filepath, 'color_intrinsics')
+  depth2color = ExtrinsicParameters()
+  depth2color.read_json(device_info_filepath, 'extrinsics')
+  return depth_intrinsics, color_intrinsics, depth2color
+
+
+def project_ir_to_color(ir_file, recording_dir):
+  """ project_ir_to_color(ir_file, recording_dir) -> color_landmarks
+
+  This function projects landmarks from the IR image to the
+  color image referential.
+
+  **Parameters**
+    
+    ``ir_file`` (path):
+      The path to the file containing the IR landmarks.
+   
+    ``recording_dir`` (path):
+      The path to the directory corresponding to the recording. 
+   
+   **Returns**
+
+    ``color_landmarks`` (dict):
+      The projected landmarks.
+  """
+  min_depth = 200
+  max_pixel_distance = 100
+  ir_landmarks = read_landmarks(ir_file)
+  depth_file = os.path.join(recording_dir, 'annotations/depth/0.bin') 
+  depth_frame = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
+  depth_intrinsics, color_intrinsics, depth2color = load_calibration(recording_dir)
+  UV_map = get_UV_map(depth_frame, min_depth, depth_intrinsics, 1e-3, color_intrinsics, depth2color)
+
+  c = 1
+  color_landmarks = {}
+  for idx, l in enumerate(ir_landmarks):
+    min_dist2 = numpy.inf
+    min_color = (-1, -1)
+    
+    for row in range(l[1] - max_pixel_distance, l[1] + max_pixel_distance):
+      for col in range(l[0] - max_pixel_distance, l[0] + max_pixel_distance):
+        
+        if row < 0 or col < 0 or row >= depth_intrinsics.height or col >= depth_intrinsics.width:
+          continue
+        
+        color_col = UV_map[0][row, col] * color_intrinsics.width
+        color_row = UV_map[1][row, col] * color_intrinsics.height
+        
+        if not numpy.isnan(color_col) and not numpy.isnan(color_row):
+          dist2 = (l[1] - row) * (l[1] - row) + (l[0] - col) * (l[0] - col)
+          if dist2 < min_dist2:
+            min_dist2 = dist2
+            min_color = (color_row, color_col)
+    
+    if not numpy.isinf(min_dist2):
+      color_col = min_color[1]
+      color_row = min_color[0]
+      color_landmarks[str(c)] = (int(color_row), int(color_col))
+    c += 1
+
+  return color_landmarks
+
+
+def project_color_to_ir(color_file, recording_dir):
+  """ project_color_to_ir(color_file, recording_dir) -> ir_landmarks
+  
+  This function projects landmarks from the color image to the
+  IR image referential.
+
+  **Parameters**
+    
+    ``color_file`` (path):
+      The path to the file containing the color landmarks.
+   
+    ``recording_dir`` (path):
+      The path to the directory corresponding to the recording. 
+   
+   **Returns**
+
+    ``ir_landmarks`` (dict):
+      The projected landmarks.
+  """
+  min_depth = 200
+  max_pixel_distance = 100
+
+  color_landmarks = read_landmarks(color_file)
+  depth_file = os.path.join(recording_dir, 'annotations/depth/0.bin') 
+  depth_frame = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
+  depth_intrinsics, color_intrinsics, depth2color = load_calibration(recording_dir)
+  UV_map = get_UV_map(depth_frame, min_depth, depth_intrinsics, 1e-3, color_intrinsics, depth2color)
+  min_dist2, min_idx = get_correspondences(color_landmarks, UV_map, 
+                                           color_intrinsics.width, 
+                                           color_intrinsics.height,
+                                           depth_intrinsics.width,
+                                           depth_intrinsics.height)
+
+  ir_landmarks = {}
+  c = 1
+  for idx in range(min_idx.shape[0]):
+    ir_landmarks[str(c)] = (int(min_idx[idx] / depth_intrinsics.width), int(min_idx[idx] % depth_intrinsics.width))
+    c += 1
+
+  return ir_landmarks
+
+
+def get_landmarks(annotation_file):
+  """ get_landmarks(annotation_file) -> landmarks
+  
+  This function reads landmarks from a file and load
+  them into a dictionary.
+
+  **Parameters**
+    
+    ``annotated_file`` (path):
+      The path to the file containing the landmarks.
+   
+   **Returns**
+
+    ``landmarks`` (dict):
+      The landmarks.
+  """
+  with open(annotation_file, "r") as c:
+    landmarks = {}
+    for line in c:
+      line = line.rstrip()
+      ints = line.split()
+      landmarks[ints[0]] = ((int(ints[2]), int(ints[1])))
+
+    return landmarks
+
+def write_eyes_pos(eyes, eyes_dir):
+  """ write_eyes_pos(eyes, eyes_dir)
+
+  This function write the eyes center in text file(s).
+
+  **Parameters**
+    
+    ``eyes`` (tuple):
+      tuple containing the (x,y) coordinates of the eyes center.
+   
+    ``eyes_dir`` (path):
+      The path to the dir where the file(s) are written.
+  """ 
+  if not os.path.isdir(eyes_dir):
+    os.makedirs(eyes_dir)
+  for i in range(0, 10):
+    eyes_filename = os.path.join(eyes_dir, '{:0>2d}.pos'.format(i))
+    eyes_file = open(eyes_filename, 'w')
+    eyes_file.write('{0} {1} {2} {3}'.format(eyes[0], eyes[1], eyes[2], eyes[3]))
+    eyes_file.close()
 
 
 def main(user_input=None):
   """
-  
-  Main function to extract images from recorded streams.
-
+  Main function to extract eyes center from existing annotations.
   """
 
   # Parse the command-line arguments
@@ -127,7 +468,7 @@ def main(user_input=None):
   args = docopt(
       __doc__ % completions,
       argv=arguments,
-      version='Image extractor (%s)' % version,
+      version='Eyes position extractor (%s)' % version,
       )
 
   # if the user wants more verbosity, lowers the logging level
@@ -142,7 +483,14 @@ def main(user_input=None):
   if not os.path.isdir(args['--eyesdir']):
     os.mkdir(args['--eyesdir'])
 
-  logfile = open('annotations.txt', 'w')
+  logfile = open(args['--log'], 'w')
+  
+  # to compute various stats
+  total_counter = 0
+  inexisting_counter = 0
+  incomplete_counter = 0
+  projection_counter = 0
+  heuristic_counter = 0
 
   # go through the subjects 
   for subject in os.listdir(base_dir):
@@ -158,7 +506,7 @@ def main(user_input=None):
       for condition in ['SR300-laptop', 'SR300-mobile']:
         
         for recording in ['0', '1']:
-          logger.info("===== Subject {0}, session {1}, device {2}, recording {3} ...".format(subject, session, condition, recording))
+          logger.debug("===== Subject {0}, session {1}, device {2}, recording {3} ...".format(subject, session, condition, recording))
 
           # create directories to save the extracted annotations 
           if not os.path.isdir(os.path.join(args['--eyesdir'], subject, session, condition, recording)):
@@ -170,86 +518,109 @@ def main(user_input=None):
           if not os.path.isdir(os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth')):
             os.makedirs(os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth'))
 
-          # get the annotations data
+          # the directories - input
+          recording_dir = os.path.join(session_dir, condition, recording)
           color_dir = os.path.join(session_dir, condition, recording, 'annotations', 'color')
           ir_dir = os.path.join(session_dir, condition, recording, 'annotations', 'ir')
           depth_dir = os.path.join(session_dir, condition, recording, 'annotations', 'depth')
 
-          # process color annotations  - extracted image is *always* the first annotated one (I hope)
+          # the directories - output
+          color_eyes_dir = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'color')
+          ir_eyes_dir = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'ir')
+          depth_eyes_dir = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth')
+          
+          # read the landmarks - color
           color_file = os.path.join(color_dir, '0.pos')
           try:
-            reye_x, reye_y, leye_x, leye_y = get_eyes_center(color_file)
-            if reye_x == 0:
-              logfile.write(color_file + '(incomplete)\n')
-              logger.warn("{0} incomplete -> skipping !")
-              continue
+            color_landmarks = get_landmarks(color_file)
+          except IOError:
+            logger.warn("No color annotations for recording {0}".format(recording_dir))
+            logfile.write(color_dir + '\n')
+            inexisting_counter += 1
+
+          # read the landmarks - ir
+          ir_file  = os.path.join(ir_dir, '0.pos')
+          try:
+            ir_landmarks = get_landmarks(ir_file)
+          except IOError:
+            logger.warn("No ir annotations for recording {0}".format(recording_dir))
+            logfile.write(ir_dir + '\n')
+          
+          # read the landmarks - depth
+          depth_file  = os.path.join(depth_dir, '0.pos')
+          try:
+            depth_landmarks = get_landmarks(ir_file)
+          except IOError:
+            logger.warn("No depth annotations for recording {0}".format(recording_dir))
+            logfile.write(depth_dir + '\n')
+
+          # check if the landmarks are complete - if not, try to reproject
+          if not is_annotation_complete(color_landmarks) and is_annotation_complete(ir_landmarks):
+            logger.warn("Projecting IR to color for recording {0}".format(recording_dir))
+            color_landmarks = project_ir_to_color(ir_file, recording_dir)
+            projection_counter += 1
+          if not is_annotation_complete(ir_landmarks) and is_annotation_complete(color_landmarks):
+            logger.warn("Projecting color to IR for recording {0}".format(recording_dir))
+            ir_landmarks = project_color_to_ir(color_file, recording_dir)
+            depth_landmarks = ir_landmarks 
+            projection_counter += 1
+
+          # check if we have all we need (possibly after re-projection)
+          if is_annotation_complete(color_landmarks) and is_annotation_complete(ir_landmarks) and is_annotation_complete(depth_landmarks):
+
+            # get the eyes center 
+            color_eyes = get_eyes_center(color_landmarks)
+            ir_eyes = get_eyes_center(ir_landmarks)
+            depth_eyes = get_eyes_center(depth_landmarks)
+
+            # plot stuff if asked for 
+            if bool(args['--plot']):
+              color_frame = get_color_frame(color_dir)
+              display_color = draw_eyes_center(color_frame, color_eyes)
+              ir_frame = get_data_frame(ir_dir)
+              display_ir = draw_eyes_center(ir_frame, ir_eyes)
+              from matplotlib import pyplot
+              f, axarr = pyplot.subplots(1, 2)
+              pyplot.suptitle('Inferred eyes center')
+              axarr[0].imshow(numpy.rollaxis(numpy.rollaxis(display_color, 2),2))
+              axarr[0].set_title("Color")
+              axarr[1].imshow(numpy.rollaxis(numpy.rollaxis(display_ir, 2),2))
+              axarr[1].set_title("NIR")
+              pyplot.show()
+
+              if args['--verbose'] >= 2: 
+                display_color = draw_landmarks(color_frame, color_file, color_landmarks)
+                display_ir = draw_landmarks(ir_frame, ir_file, ir_landmarks)
+                f, axarr = pyplot.subplots(1, 2)
+                pyplot.suptitle('Landmarks')
+                axarr[0].imshow(numpy.rollaxis(numpy.rollaxis(display_color, 2),2))
+                axarr[0].set_title("Color")
+                axarr[1].imshow(numpy.rollaxis(numpy.rollaxis(display_ir, 2),2))
+                axarr[1].set_title("NIR")
+                pyplot.show()
+            
+            # and save the file(s)
+            write_eyes_pos(color_eyes, color_eyes_dir)
+            write_eyes_pos(ir_eyes, ir_eyes_dir)
+            write_eyes_pos(depth_eyes, depth_eyes_dir)
+          
+          # find a heuristic to deal with the case where eyes center could not be retrieved from annotations
+          else:
+            logger.warn("Heuristic needed for recording {0}".format(recording_dir))
+            heuristic_counter += 1
             if bool(args['--plot']):
               frame = get_color_frame(color_dir)
-              plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
-
-            for i in range(0, 10):
-              eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'color', '{:0>2d}.pos'.format(i))
-              if os.path.isfile(eyes_filename):
-                logger.info('already exists in {0}'.format(color_dir))
-                continue
-              else:
-                eyes_file = open(eyes_filename, 'w')
-                eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
-                eyes_file.close()
-
-          except IOError:
-            logger.warn("No annotations for recording {0}".format(color_dir))
-            logfile.write(color_dir + '\n')
-            continue
-
-          # process NIR annotations
-          ir_file = os.path.join(ir_dir, '0.pos')
-          try:
-            reye_x, reye_y, leye_x, leye_y = get_eyes_center(ir_file)
-            if reye_x == 0:
-              logfile.write(ir_file + '(incomplete)\n')
-              logger.warn("{0} incomplete -> skipping !")
-              continue
-            if bool(args['--plot']):
-              frame = get_data_frame(ir_dir)
-              plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
-
-            for i in range(0, 10):
-              eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.pos'.format(i))
-              if os.path.isfile(eyes_filename):
-                logger.info('already exists in {0}'.format(ir_dir))
-                continue
-              else:
-                eyes_file = open(eyes_filename, 'w')
-                eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
-                eyes_file.close()
+              from matplotlib import pyplot
+              pyplot.imshow(numpy.rollaxis(numpy.rollaxis(frame, 2),2))
+              pyplot.title('Image')
+              pyplot.show()
           
-          except IOError:
-            logger.warn("No annotations for recording {0}".format(ir_dir))
-            logfile.write(ir_dir + '\n')
-            continue
+          total_counter += 1
 
-          # process depth annotations
-          depth_file = os.path.join(depth_dir, '0.pos')
-          try:
-            reye_x, reye_y, leye_x, leye_y = get_eyes_center(depth_file)
-            if reye_x == 0:
-              logfile.write(depth_file + '(incomplete)\n')
-              logger.warn("{0} incomplete -> skipping !")
-              continue
-            if bool(args['--plot']):
-              frame = get_data_frame(depth_dir)
-              plot_eyes_center(frame, (reye_x, reye_y, leye_x, leye_y))
-
-            eyes_filename = os.path.join(args['--eyesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.pos'.format(i))
-            for i in range(0, 10):
-              eyes_file = open(eyes_filename, 'w')
-              eyes_file.write('{0} {1} {2} {3}'.format(reye_x, reye_y, leye_x, leye_y))
-              eyes_file.close()
-          
-          except IOError:
-            logger.warn("No annotations for recording {0}".format(depth_dir))
-            logfile.write(depth_dir + '\n')
-            continue
+  logger.info("Processed {0} sequences".format(total_counter))
+  logger.info("\t {0} had no annotations".format(inexisting_counter))
+  logger.info("\t {0} needed reprojection".format(projection_counter))
+  logger.info("\t {0} where incomplete".format(incomplete_counter))
+  logger.info("\t {0} needed heuristic (incomplete after reprojection)".format(heuristic_counter))
 
   logfile.close()
