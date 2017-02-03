@@ -461,15 +461,9 @@ def main(user_input=None):
       arguments = sys.argv[1:]
 
   prog = os.path.basename(sys.argv[0])
-  completions = dict(
-          prog=prog,
-          version=version,
-          )
-  args = docopt(
-      __doc__ % completions,
-      argv=arguments,
-      version='Eyes position extractor (%s)' % version,
-      )
+  completions = dict(prog=prog,version=version,)
+  args = docopt(__doc__ % completions,argv=arguments,
+                version='Eyes position extractor (%s)' % version,)
 
   # if the user wants more verbosity, lowers the logging level
   if args['--verbose'] == 1: logging.getLogger("extract_log").setLevel(logging.INFO)
@@ -535,7 +529,7 @@ def main(user_input=None):
             color_landmarks = get_landmarks(color_file)
           except IOError:
             logger.warn("No color annotations for recording {0}".format(recording_dir))
-            logfile.write(color_dir + '\n')
+            logfile.write('[NO ANNOTATIONS] ' + color_dir + '\n')
             inexisting_counter += 1
 
           # read the landmarks - ir
@@ -544,7 +538,7 @@ def main(user_input=None):
             ir_landmarks = get_landmarks(ir_file)
           except IOError:
             logger.warn("No ir annotations for recording {0}".format(recording_dir))
-            logfile.write(ir_dir + '\n')
+            logfile.write('[NO ANNOTATIONS] ' + ir_dir + '\n')
           
           # read the landmarks - depth
           depth_file  = os.path.join(depth_dir, '0.pos')
@@ -552,15 +546,17 @@ def main(user_input=None):
             depth_landmarks = get_landmarks(ir_file)
           except IOError:
             logger.warn("No depth annotations for recording {0}".format(recording_dir))
-            logfile.write(depth_dir + '\n')
+            logfile.write('[NO ANNOTATIONS] ' + depth_dir + '\n')
 
           # check if the landmarks are complete - if not, try to reproject
           if not is_annotation_complete(color_landmarks) and is_annotation_complete(ir_landmarks):
             logger.warn("Projecting IR to color for recording {0}".format(recording_dir))
+            logfile.write('[PROJECT] ' + recording_dir + '\n')
             color_landmarks = project_ir_to_color(ir_file, recording_dir)
             projection_counter += 1
           if not is_annotation_complete(ir_landmarks) and is_annotation_complete(color_landmarks):
             logger.warn("Projecting color to IR for recording {0}".format(recording_dir))
+            logfile.write('[PROJECT] ' + recording_dir + '\n')
             ir_landmarks = project_color_to_ir(color_file, recording_dir)
             depth_landmarks = ir_landmarks 
             projection_counter += 1
@@ -607,6 +603,7 @@ def main(user_input=None):
           # find a heuristic to deal with the case where eyes center could not be retrieved from annotations
           else:
             logger.warn("Heuristic needed for recording {0}".format(recording_dir))
+            logfile.write('[HEURISTIC] ' + recording_dir + '\n')
             heuristic_counter += 1
             if bool(args['--plot']):
               frame = get_color_frame(color_dir)
