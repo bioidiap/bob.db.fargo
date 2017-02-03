@@ -96,16 +96,12 @@ def load_timestamps(filename):
     ``timestamps`` (dict):
       dictionary with index as key and timestamp as value.
   """
-  
   timestamps = {}
-  try:
-    f = open(filename, 'r')
-    for line in f:
-      line = line.rstrip('\n')
-      splitted = line.split(' ')
-      timestamps[int(splitted[0])] = int(splitted[1])   
-  except IOError:
-    logger.warn("No timestamps for {0}".format(filename))
+  f = open(filename, 'r')
+  for line in f:
+    line = line.rstrip('\n')
+    splitted = line.split(' ')
+    timestamps[int(splitted[0])] = int(splitted[1])   
   return timestamps
 
 
@@ -136,9 +132,7 @@ def get_first_annotated_frame_index(filename):
     indices = (int(first_line[0]), int(first_line[1]))
   except IOError:
     status = -1 
-    logger.warn("No annotations for this recording")
     indices = (0, 0)
-  
   return indices, status
 
 def get_annotated_image(first_annotated_frame_indices, annotation_dir):
@@ -167,7 +161,7 @@ def get_annotated_image(first_annotated_frame_indices, annotation_dir):
       Tells if the process was ok (!= -1)
   """
   annotated_frame = numpy.array([0, 0])
-  status = -1
+  status = -1 
   annotation_timestamps = []
 
   try:
@@ -177,7 +171,7 @@ def get_annotated_image(first_annotated_frame_indices, annotation_dir):
       splitted = line.split(' ')
       annotation_timestamps.append((int(splitted[0]), int(splitted[1])))   
   except IOError:
-    logger.warn("No timestamps for {0}".format(annotation_dir))
+    pass
  
   frame_counter = 0
   for frame_indices in annotation_timestamps:
@@ -287,10 +281,22 @@ def main(user_input=None):
   # log file to record errors ...
   logfile = open(args['--log'], 'a')
 
-  # go through the subjects 
-  for subject in os.listdir(base_dir):
+  # counter
+  no_data_counter = 0
+  missing_timestamps_counter = 0
+  misalignement_counter = 0
+  no_annotations_counter = 0
+  no_annotated_frame_counter = 0
 
-    
+  # go through the subjects 
+  subjects = []
+  subjects_ids = range(74, 76, 1)
+  for subject in subjects_ids:
+    subjects.append('{:0>3d}'.format(subject))
+  print subjects
+  
+  for subject in subjects:
+  #for subject in os.listdir(base_dir):
 
     sessions = ['controlled', 'dark', 'outdoor']
     # small hack to process FdV subjects ...
@@ -304,6 +310,7 @@ def main(user_input=None):
           logger.info("===== Subject {0}, session {1}, device {2}, recording {3} ...".format(subject, session, condition, recording))
 
           # create directories to save the extracted data
+          recording_dir = os.path.join(args['--dbdir'], subject, session, condition, recording)
           if not os.path.isdir(os.path.join(args['--imagesdir'], subject, session, condition, recording)):
             os.makedirs(os.path.join(args['--imagesdir'], subject, session, condition, recording))
           if not os.path.isdir(os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color')):
@@ -315,7 +322,7 @@ def main(user_input=None):
 
           # check if the recording has already been processed, and if so, that everything is ok  
           if check_if_recording_is_ok(args['--imagesdir'], subject, session, condition, recording):
-            logger.info("recording already made and ok")
+            logger.info("recording already processed and ok")
             continue
           
           # get the original data
@@ -324,48 +331,58 @@ def main(user_input=None):
           depth_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'depth')
 
           # uncompress the 7z archive - both ir and depth
-          ir_compressed = os.path.join(ir_dir, 'ir.7z')
-          command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
-          try:
-            p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdoutdata, stderrdata = p.communicate()
-          except:
-            pass
-          depth_compressed = os.path.join(depth_dir, 'depth.7z')
-          command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
-          try:
-            p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdoutdata, stderrdata = p.communicate()
-          except:
-            pass
+          #ir_compressed = os.path.join(ir_dir, 'ir.7z')
+          #command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
+          #try:
+          #  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          #  stdoutdata, stderrdata = p.communicate()
+          #except:
+          #  pass
+          #depth_compressed = os.path.join(depth_dir, 'depth.7z')
+          #command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
+          #try:
+          #  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+          #  stdoutdata, stderrdata = p.communicate()
+          #except:
+          #  pass
 
           # process color file
           color_file = os.path.join(color_dir, 'color.264')
           if os.path.isfile(color_file):
             color_stream = bob.io.video.reader(color_file)
           else:
-            logfile.write('subject {0}, session {1}, condition {2}, rec {3} -> NO DATA\n'.format(subject, session, condition, recording))
-            logger.warn('subject {0}, session {1}, condition {2}, rec {3} -> NO DATA'.format(subject, session, condition, recording))
+            logfile.write('[NO DATA] {0}\n'.format(recording_dir))
+            logger.warn('[NO DATA] {0}\n'.format(recording_dir))
+            no_data_counter += 1
             continue
 
           # get the timestamps of the color frames
-          color_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'color_timestamps.txt'))
-          ir_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'ir_timestamps.txt'))
-          depth_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'depth_timestamps.txt'))
-          
+          try:
+            color_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'color_timestamps.txt'))
+            ir_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'ir_timestamps.txt'))
+            depth_timestamps = load_timestamps(os.path.join(base_dir, subject, session, condition, recording, 'streams', 'depth_timestamps.txt'))
+          except IOError:
+            logger.warn('[MISSING TIMESTAMPS] {0}'.format(recording_dir))
+            logfile.write('[MISSING TIMESTAMPS] {0}\n'.format(recording_dir))
+            missing_timestamps_counter += 1
+
           # get the index of the first annotated frame in the stream
           first_annotated_frame_indices, status = get_first_annotated_frame_index(os.path.join(base_dir, subject, session, condition, recording, 'annotations', 'color_timestamps.txt'))
           if status < 0:
-            logfile.write('subject {0}, session {1}, condition {2}, rec {3} -> no annotations\n'.format(subject, session, condition, recording))
+            logfile.write('[NO ANNOTATIONS] {0}\n'.format(recording_dir))
+            logger.warn('[NO ANNOTATIONS] {0}'.format(recording_dir))
+            no_annotations_counter += 1 
           logger.info("First annotated frame is frame #{0}, at time {1}".format(first_annotated_frame_indices[0], first_annotated_frame_indices[1]))
           
           # get the provided image corresponding to the annotated frame - debugging purposes
           annotation_dir = os.path.join(base_dir, subject, session, condition, recording, 'annotations')
           annotated_frame, status = get_annotated_image(first_annotated_frame_indices, annotation_dir)
           if status == -1:
-            logger.warn("No provided annotated frame for this recording".format(color_file))
+            logger.warn("[NO ANNOTATED FRAME] {0}".format(recording_dir))
+            logfile.write("[NO ANNOTATED FRAME] {0}\n".format(recording_dir))
+            no_annotated_frame_counter += 1
           else:
-            if bool(args['--plot']):
+            if bool(args['--plot']) and args['--verbose'] >= 2:
               from matplotlib import pyplot
               pyplot.imshow(numpy.rollaxis(numpy.rollaxis(annotated_frame, 2),2))
               pyplot.title('Provided annotated frame')
@@ -385,13 +402,15 @@ def main(user_input=None):
               # save color image
               saved_png = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color', '{:0>2d}.png'.format(saved_image_index))
               #to_save = bob.ip.color.rgb_to_gray(frame)
-              bob.io.base.save(frame, saved_png)
+              #bob.io.base.save(frame, saved_png)
            
               # if this is the first frame to save, make a check to be sure that this frame corresponds to the provided annotated frame ...
               if i == first_annotated_frame_indices[0] and status == 0:
                 diff = annotated_frame - frame
                 if numpy.any(diff):
-                  logfile.write('subject {0}, session {1}, condition {2}, rec {3} -> current frame and annotated frame are different\n'.format(subject, session, condition, recording))
+                  logfile.write("[MISALIGNEMENT OF IMAGES] {0}\n".format(recording_dir))
+                  logger.warn("[MISALIGNEMENT OF IMAGES] {0}".format(recording_dir))
+                  misalignement_counter += 1
                   if bool(args['--plot']):
                     from matplotlib import pyplot
                     f, axarr = pyplot.subplots(1, 3)
@@ -409,10 +428,10 @@ def main(user_input=None):
               ir_file = os.path.join(ir_dir, '{0}.bin'.format(ir_index))
               ir_data = numpy.fromfile(ir_file, dtype=numpy.int16).reshape(-1, 640)
               saved_ir = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.hdf5'.format(saved_image_index))
-              bob.io.base.save(ir_data, saved_ir)
+              #bob.io.base.save(ir_data, saved_ir)
               ir_image = ir_data / 4.0 
               saved_ir_image = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.png'.format(saved_image_index))
-              bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
+              #bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
               
               # find the closest depth frame, and save the data 
               depth_index = find_closest_frame_index(color_timestamps[toto], depth_timestamps)
@@ -420,10 +439,10 @@ def main(user_input=None):
               depth_file = os.path.join(depth_dir, '{0}.bin'.format(depth_index))
               depth_data = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
               saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.hdf5'.format(saved_image_index))
-              bob.io.base.save(depth_data, saved_depth)
+              #bob.io.base.save(depth_data, saved_depth)
   
               # plot saved data if asked for
-              if bool(args['--plot']):
+              if bool(args['--plot']) and args['--verbose'] >= 2:
                 from matplotlib import pyplot
                 f, axarr = pyplot.subplots(1, 3)
                 pyplot.suptitle('frame {0} at time {1} saved'.format(toto, color_timestamps[toto]))
@@ -441,4 +460,9 @@ def main(user_input=None):
             if i > last_frame_index:
               break
 
+  logger.info('[NO DATA] -> {0}'.format(no_data_counter))
+  logger.info('[MISSING TIMESTAMPS] -> {0}'.format(missing_timestamps_counter))
+  logger.info('[NO ANNOTATIONS] -> {0}'.format(no_annotations_counter))
+  logger.info('[NO ANNOTATED FRAME] -> {0}'.format(no_annotated_frame_counter))
+  logger.info('[MISALIGNMENT] -> {0}'.format(misalignement_counter))
   logfile.close()
