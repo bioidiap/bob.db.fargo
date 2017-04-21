@@ -33,14 +33,13 @@ setup(
 
     entry_points = {
         'console_scripts': [
-          'extract_images.py = bob.db.fargo.scripts.extract_images:main',
-          'extract_images_new.py = bob.db.fargo.scripts.extract_images_new:main',
+          'extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main',
+          'extract_poses.py = bob.db.fargo.scripts.extract_poses:main',
           'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main',
+          'make_pose_lists.py = bob.db.fargo.scripts.make_pose_lists:main',
           'extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main',
           'convert_ir_and_depth.py = bob.db.fargo.scripts.convert_ir_and_depth:main',
-          'annotate_incomplete.py = bob.db.fargo.scripts.annotate_incomplete:main',
-          'annotate_incomplete_nir.py = bob.db.fargo.scripts.annotate_incomplete_nir:main',
-          'check_annotations.py = bob.db.fargo.scripts.check_annotations:main',
+          'reencode_color.py = bob.db.fargo.scripts.reencode_color:main',
         ],
         
         'bob.db': [
