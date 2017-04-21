@@ -296,6 +296,10 @@ def main(user_input=None):
 
 
   # go through the subjects 
+ 
+  #subjects_range = range(7,8,1)
+  #subjects = ['{:0>3d}'.format(s) for s in subjects_range]
+  #for subject in subjects:
   for subject in os.listdir(base_dir):
     if not os.path.isdir(os.path.join(args['--imagesdir'], subject)):
       os.mkdir(os.path.join(args['--imagesdir'], subject))
@@ -383,7 +387,7 @@ def main(user_input=None):
               # save grayscale image
               saved_png = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color', '{:0>2d}.png'.format(saved_image_index))
               to_save = bob.ip.color.rgb_to_gray(frame)
-              bob.io.base.save(to_save.astype('uint8'), saved_png)
+              bob.io.base.save(frame.astype('uint8'), saved_png)
            
               # if this is the first frame to save, make a check to be sure that this frame corresponds to the provided annotated frame ...
               if i == first_annotated_frame_indices[0] and status == 0:
