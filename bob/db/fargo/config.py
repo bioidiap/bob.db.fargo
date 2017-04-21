@@ -65,10 +65,10 @@ database_public_UO_depth = Database(
     protocol="public_UO_depth"
 )
 
-database_public_MC_color_almost_frontal = Database(
+database_pos_pitch_small_MC_RGB = Database(
     original_directory='/idiap/project/fargo/database/images_pose_clusters',
     annotation_directory=None, 
     original_extension=".png",
-    protocol="public_MC_color_almost_frontal"
+    protocol="pos_pitch_small_MC_RGB"
 )
 
