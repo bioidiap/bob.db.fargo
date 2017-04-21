@@ -77,18 +77,12 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
   base_path = os.path.join(images_dir, subject, session, condition, recording)
 
   folders = []
-  folders.append('10degreesleft')
-  folders.append('20degreesleft')
-  folders.append('30degreesleft')
-  folders.append('10degreesright')
-  folders.append('20degreesright')
-  folders.append('30degreesright')
-  folders.append('10degreestop')
-  folders.append('20degreestop')
-  folders.append('30degreestop')
-  folders.append('10degreesbottom')
-  folders.append('20degreesbottom')
-  folders.append('30degreesbottom')
+  folders.append('yaw_small')
+  folders.append('yaw_left')
+  folders.append('yaw_right')
+  folders.append('pitch_small')
+  folders.append('pitch_top')
+  folders.append('pitch_bottom')
   for folder in folders:
     if not os.path.isdir(os.path.join(base_path, 'color', folder)):
       return False
@@ -175,29 +169,31 @@ def main(user_input=None):
     sys.exit()
   base_dir = args['--dbdir']
 
-  # stats on pose cluster 
+  # lists for pose cluster
+  yaw_small = []
+  yaw_left = []
+  yaw_right = []
+  pitch_small = []
+  pitch_top = []
+  pitch_bottom = []
+
+  # stats on pose clusters 
   n_sequences = 0
-  ten_degrees_left = 0
-  twenty_degrees_left = 0
-  thirty_degrees_left = 0
-  ten_degrees_right = 0
-  twenty_degrees_right = 0
-  thirty_degrees_right = 0
-  ten_degrees_top = 0
-  twenty_degrees_top = 0
-  thirty_degrees_top = 0
-  ten_degrees_bottom = 0
-  twenty_degrees_bottom = 0
-  thirty_degrees_bottom = 0
+  yaw_small_counter = 0
+  yaw_left_counter = 0
+  yaw_right_counter = 0
+  pitch_small_counter = 0
+  pitch_top_counter = 0
+  pitch_bottom_counter = 0
 
   # go through the subjects 
-  #subjects = []
-  #subjects_ids = range(1, 2, 1)
-  #for subject in subjects_ids:
-  #  subjects.append('{:0>3d}'.format(subject))
-  #for subject in subjects:
+  subjects = []
+  subjects_ids = range(26, 27, 1)
+  for subject in subjects_ids:
+    subjects.append('{:0>3d}'.format(subject))
+  for subject in subjects:
   
-  for subject in os.listdir(base_dir):
+  #for subject in os.listdir(base_dir):
 
     sessions = ['controlled', 'dark', 'outdoor']
     # small hack to process FdV subjects ...
@@ -232,28 +228,22 @@ def main(user_input=None):
           sequence = seq.load()
           n_sequences += 1
 
+          # empty the lists
+          del yaw_small[:]
+          del yaw_left[:]
+          del yaw_right[:]
+          del pitch_small[:]
+          del pitch_top[:]
+          del pitch_bottom[:]
+
           # loop on the different annotations, defining pose intervals
           indices = range(1,13,1)
           for i in indices :
             
             # the folder where images will be stored depend on the annotation index
-            folder = ''
-            if i == 1: folder = '10degreesleft'
-            if i == 2: folder = '20degreesleft'
-            if i == 3: folder = '30degreesleft'
-            if i == 4: folder = '10degreesright'
-            if i == 5: folder = '20degreesright'
-            if i == 6: folder = '30degreesright'
-            if i == 7: folder = '10degreestop'
-            if i == 8: folder = '20degreestop'
-            if i == 9: folder = '30degreestop'
-            if i == 10: folder = '10degreesbottom'
-            if i == 11: folder = '20degreesbottom'
-            if i == 12: folder = '30degreesbottom'
 
             # retrieve the past timestamps  - up to the previous annotated image 
             previous_stamps = retrieve_past_timestamps(color_annotations_timestamps[i], color_stream_timestamps, color_annotations_timestamps[i-1])
-            logger.debug("there are {0} frames in cluster {1}".format(len(previous_stamps), folder))
             
             # get the frames in the interval
             counter = 0
@@ -262,71 +252,82 @@ def main(user_input=None):
               # check the eligibility conditions on this frame 
               if previous_stamps[index] > color_annotations_timestamps[i-1] and counter < 5:
                 
-                # save this image
-                to_save_dir = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color', folder)
-                if not os.path.isdir(os.path.join(to_save_dir)):
-                  os.makedirs(to_save_dir)
-                saved_image = os.path.join(to_save_dir, '{:0>2d}.png'.format(counter))
-                bob.io.base.save(sequence[index], saved_image)
-             
-                # plot stuff if asked for
-                if bool(args['--plot']):
-                  from matplotlib import pyplot
-                  pyplot.imshow(numpy.rollaxis(numpy.rollaxis(sequence[index], 2),2))
-                  pyplot.title('image {0} for interval {1}'.format(counter, folder))
-                  pyplot.show()
+                # put this image in the correct list
+                if i == 1 or i == 4: yaw_small.append(sequence[index])
+                if i == 2 or i == 3: yaw_left.append(sequence[index])
+                if i == 5 or i== 6: yaw_right.append(sequence[index])
+                if i == 7 or i == 10: pitch_small.append(sequence[index])
+                if i == 8 or i == 9: pitch_top.append(sequence[index])
+                if i == 11 or i == 12: pitch_bottom.append(sequence[index])
+              
+              counter += 1
 
-                # save some stats
-                if i == 1: ten_degrees_left += 1
-                if i == 2: twenty_degrees_left += 1
-                if i == 3: thirty_degrees_left += 1
-                if i == 4: ten_degrees_right += 1
-                if i == 5: twenty_degrees_right += 1
-                if i == 6: thirty_degrees_right += 1
-                if i == 7: ten_degrees_top += 1
-                if i == 8: twenty_degrees_top += 1
-                if i == 9: thirty_degrees_top += 1
-                if i == 10: ten_degrees_bottom += 1
-                if i == 11: twenty_degrees_bottom += 1
-                if i == 12: thirty_degrees_bottom += 1
+          # save images for this sequence
+          folders = ['yaw_small', 'yaw_left', 'yaw_right', 'pitch_small', 'pitch_top', 'pitch_bottom']
+          for folder in folders:
 
-                # increment the counter of saved images
-                counter += 1
-  
+            to_save_dir = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color', folder) 
+            if not os.path.isdir(os.path.join(to_save_dir)):
+              os.makedirs(to_save_dir)
+            
+            current_list = []
+            if folder == 'yaw_small': current_list = yaw_small
+            if folder == 'yaw_left': current_list = yaw_left
+            if folder == 'yaw_right': current_list = yaw_right
+            if folder == 'pitch_small': current_list = pitch_small
+            if folder == 'pitch_top': current_list = pitch_top
+            if folder == 'pitch_bottom': current_list = pitch_bottom
+
+            k = 0
+            for image in current_list:
+              saved_image = os.path.join(to_save_dir, '{:0>2d}.png'.format(k))
+              bob.io.base.save(image, saved_image)
+
+              if bool(args['--plot']):
+                from matplotlib import pyplot
+                pyplot.imshow(numpy.rollaxis(numpy.rollaxis(image, 2),2))
+                pyplot.title('image {0} for interval {1}'.format(k, folder))
+                pyplot.show()
+ 
+              k += 1
+            
+          # update stats with this sequence
+          yaw_small_counter += len(yaw_small)
+          yaw_left_counter += len(yaw_left)
+          yaw_right_counter += len(yaw_right)
+          pitch_small_counter += len(pitch_small)
+          pitch_top_counter += len(pitch_top)
+          pitch_bottom_counter += len(pitch_bottom)
+          print "yaw_small_counter = {0}".format(yaw_small_counter)
+
+
   f = open('stats.txt', 'w')
   f.write("===== YAW =====\n")
-  write_stat(f, '10 left', ten_degrees_left, n_sequences)
-  write_stat(f, '20 left', twenty_degrees_left, n_sequences)
-  write_stat(f, '30 left', thirty_degrees_left, n_sequences)
-  write_stat(f, '10 right', ten_degrees_right, n_sequences)
-  write_stat(f, '20 right', twenty_degrees_right, n_sequences)
-  write_stat(f, '30 right', thirty_degrees_right, n_sequences)
-  f.write("===== PITCH =====\n")
-  write_stat(f, '10 top', ten_degrees_top, n_sequences)
-  write_stat(f, '20 top', twenty_degrees_top, n_sequences)
-  write_stat(f, '30 top', thirty_degrees_top, n_sequences)
-  write_stat(f, '10 bottom', ten_degrees_bottom, n_sequences)
-  write_stat(f, '20 bottom', twenty_degrees_bottom, n_sequences)
-  write_stat(f, '30 bottom', thirty_degrees_bottom, n_sequences)
+  write_stat(f, 'yaw_small', yaw_small_counter, n_sequences)
+  write_stat(f, 'yaw_left', yaw_left_counter, n_sequences)
+  write_stat(f, 'yaw_right', yaw_right_counter, n_sequences)
+  write_stat(f, 'pitch_small', pitch_small_counter, n_sequences)
+  write_stat(f, 'pitch_top', pitch_top_counter, n_sequences)
+  write_stat(f, 'pitch_bottom', pitch_bottom_counter, n_sequences)
   f.close()
 
   from matplotlib import pyplot
   
-  yaw = (thirty_degrees_right, twenty_degrees_right, ten_degrees_right, ten_degrees_left, twenty_degrees_left, thirty_degrees_left)
-  pitch = (thirty_degrees_top, twenty_degrees_top, ten_degrees_top, ten_degrees_bottom, twenty_degrees_bottom, thirty_degrees_bottom)
+  yaw = (yaw_right_counter, yaw_small_counter, yaw_left_counter)
+  pitch = (pitch_bottom_counter, pitch_small_counter, pitch_top_counter)
 
-  n_groups = 6
+  n_groups = 3
   index = numpy.arange(n_groups)
   bar_width = 0.5
   opacity = 0.4
   
   pyplot.bar(index, yaw, bar_width, alpha=opacity, color='b', label='Yaw')
-  pyplot.xticks(index, ('-30', '-20', '-10', '10', '20', '30'))
+  pyplot.xticks(index, ('left', '~frontal', 'right'))
   pyplot.title('Yaw')
   pyplot.savefig('stats-yaw.png')
 
   pyplot.figure()
   pyplot.bar(index, pitch, bar_width, alpha=opacity, color='b', label='Pitch')
-  pyplot.xticks(index, ('-30', '-20', '-10', '10', '20', '30'))
+  pyplot.xticks(index, ('top', '~frontal', 'bottom'))
   pyplot.title('Pitch')
   pyplot.savefig('stats-pitch.png')
