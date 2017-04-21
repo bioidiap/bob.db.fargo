@@ -3,7 +3,7 @@
 # Guillaume HEUSCH <guillaume.heusch@idiap.ch>
 # Mon 21 Nov 08:25:54 CET 2016
 
-"""Image extractor for the FARGO videos (%(version)s)
+"""(Frontal) Image extractor for the FARGO videos (%(version)s)
 
 Usage:
   %(prog)s [--dbdir=<path>] [--imagesdir=<path>] [--interval=<int>] 
@@ -106,7 +106,7 @@ def load_timestamps(filename):
 
 
 def get_first_annotated_frame_index(filename):
-  """get_first_annotated_frame_index(filename) -> (frame_index, frame_timestamp)
+  """get_first_annotated_frame_index(filename) -> (frame_index, frame_timestamp), status
   This function determines the frame index of the first annotated frame .
  
   It is based on the timestamps file provided with the annoations.
@@ -134,6 +134,7 @@ def get_first_annotated_frame_index(filename):
     status = -1 
     indices = (0, 0)
   return indices, status
+
 
 def get_annotated_image(first_annotated_frame_indices, annotation_dir):
   """get_annotated_image(first_annotated_frame_indices, annotation_dir) -> annotated_frame, status
@@ -185,6 +186,7 @@ def get_annotated_image(first_annotated_frame_indices, annotation_dir):
 
   return annotated_frame, -1 
 
+
 def check_if_recording_is_ok(images_dir, subject, session, condition, recording):
   """check_if_recording_is_ok(images_dir, subject, session, condition, recording) -> [True, False]
   This function checks if the processing of an existing recording is complete.
@@ -192,6 +194,9 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
   This function goes recursively through the folder where the data from
   this recording are supposed to be saved. Returns True if every file
   supposed to be here is present, and False otherwise.
+
+  This is necessary since ffmpeg is sometimes "unavailable", causing 
+  the script to stop
 
   **Parameters**
 
@@ -232,27 +237,11 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
   
   return True
 
-def write_bindata_as_image(data, filename, ir=True):
-
-    # rescale to 0-255
-    min_value = numpy.min(data)
-    max_value = numpy.max(data)
-    print min_value
-    print max_value
-    new_data = (data - min_value) / (max_value - min_value) * 255.0
-
-    from matplotlib import pyplot
-    if ir:
-      pyplot.imshow(data, cmap='gray')
-    else:
-      pyplot.imshow(data, cmap='bwr')
-    pyplot.show()
-
   
 def main(user_input=None):
   """
   
-  Main function to extract images from recorded streams.
+  Main function to extract frontal images from recorded streams.
 
   """
 
@@ -293,9 +282,8 @@ def main(user_input=None):
   subjects_ids = range(74, 76, 1)
   for subject in subjects_ids:
     subjects.append('{:0>3d}'.format(subject))
-  print subjects
-  
   for subject in subjects:
+  
   #for subject in os.listdir(base_dir):
 
     sessions = ['controlled', 'dark', 'outdoor']
@@ -330,21 +318,23 @@ def main(user_input=None):
           ir_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'ir')
           depth_dir = os.path.join(base_dir, subject, session, condition, recording, 'streams', 'depth')
 
-          # uncompress the 7z archive - both ir and depth
-          #ir_compressed = os.path.join(ir_dir, 'ir.7z')
-          #command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
-          #try:
-          #  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-          #  stdoutdata, stderrdata = p.communicate()
-          #except:
-          #  pass
-          #depth_compressed = os.path.join(depth_dir, 'depth.7z')
-          #command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
-          #try:
-          #  p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-          #  stdoutdata, stderrdata = p.communicate()
-          #except:
-          #  pass
+          # uncompress the 7z archive - both ir and depth - if needed
+          if (len(os.listdir(ir_dir))) == 1 and ('ir.7z' in os.listdir(ir_dir)):
+            ir_compressed = os.path.join(ir_dir, 'ir.7z')
+            command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
+            try:
+              p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              stdoutdata, stderrdata = p.communicate()
+            except:
+              pass
+          if (len(os.listdir(ir_dir))) == 1 and ('ir.7z' in os.listdir(ir_dir)):
+            depth_compressed = os.path.join(depth_dir, 'depth.7z')
+            command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
+            try:
+              p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+              stdoutdata, stderrdata = p.communicate()
+            except:
+              pass
 
           # process color file
           color_file = os.path.join(color_dir, 'color.264')
@@ -374,6 +364,7 @@ def main(user_input=None):
             no_annotations_counter += 1 
           logger.info("First annotated frame is frame #{0}, at time {1}".format(first_annotated_frame_indices[0], first_annotated_frame_indices[1]))
           
+          # =========================================================================================================
           # get the provided image corresponding to the annotated frame - debugging purposes
           annotation_dir = os.path.join(base_dir, subject, session, condition, recording, 'annotations')
           annotated_frame, status = get_annotated_image(first_annotated_frame_indices, annotation_dir)
@@ -387,6 +378,7 @@ def main(user_input=None):
               pyplot.imshow(numpy.rollaxis(numpy.rollaxis(annotated_frame, 2),2))
               pyplot.title('Provided annotated frame')
               pyplot.show()
+          # =========================================================================================================
           
           interval = int(args['--interval'])
           saved_image_index = 0
@@ -397,13 +389,13 @@ def main(user_input=None):
             
             # get the frames of interest (i.e. at each interval)
             toto = i - first_annotated_frame_indices[0]
-            if toto % 4 == 0 and i < last_frame_index:
+            if toto % interval == 0 and i < last_frame_index:
 
               # save color image
               saved_png = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'color', '{:0>2d}.png'.format(saved_image_index))
-              #to_save = bob.ip.color.rgb_to_gray(frame)
-              #bob.io.base.save(frame, saved_png)
-           
+              bob.io.base.save(frame, saved_png)
+              
+              # =========================================================================================================
               # if this is the first frame to save, make a check to be sure that this frame corresponds to the provided annotated frame ...
               if i == first_annotated_frame_indices[0] and status == 0:
                 diff = annotated_frame - frame
@@ -421,25 +413,26 @@ def main(user_input=None):
                     axarr[2].imshow(numpy.rollaxis(numpy.rollaxis(diff, 2),2))
                     axarr[2].set_title("Difference")
                     pyplot.show()
+              # =========================================================================================================
 
-              # find the closest ir frame, and save the data 
+              # find the closest ir frame, and save the image 
               ir_index = find_closest_frame_index(color_timestamps[toto], ir_timestamps)
               logger.debug("Closest IR frame is at {0} with index {1} (color is at {2})".format(ir_timestamps[ir_index], ir_index, color_timestamps[toto]))
               ir_file = os.path.join(ir_dir, '{0}.bin'.format(ir_index))
               ir_data = numpy.fromfile(ir_file, dtype=numpy.int16).reshape(-1, 640)
-              saved_ir = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.hdf5'.format(saved_image_index))
-              #bob.io.base.save(ir_data, saved_ir)
+              # kind of normalization that looks OK
               ir_image = ir_data / 4.0 
               saved_ir_image = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.png'.format(saved_image_index))
-              #bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
+              bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
               
-              # find the closest depth frame, and save the data 
+              # find the closest depth frame, and save the DATA 
+              # note that the depth data have been pre-processed and turned into images for (our) face verificaton purposes
               depth_index = find_closest_frame_index(color_timestamps[toto], depth_timestamps)
               logger.debug("Closest depth frame is at {0} with index {1} (color is at {2})".format(depth_timestamps[depth_index], depth_index, color_timestamps[toto]))
               depth_file = os.path.join(depth_dir, '{0}.bin'.format(depth_index))
               depth_data = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
+              # TODO: add the pre-processing of depth data - Guillaume HEUSCH, 21-04-2017
               saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.hdf5'.format(saved_image_index))
-              #bob.io.base.save(depth_data, saved_depth)
   
               # plot saved data if asked for
               if bool(args['--plot']) and args['--verbose'] >= 2:
