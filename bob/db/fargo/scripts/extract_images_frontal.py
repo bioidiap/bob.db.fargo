@@ -228,7 +228,7 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
     filename = os.path.join(color_dir, '{:0>2d}.png'.format(index))
     if not os.path.isfile(filename):
       return False
-    filename = os.path.join(ir_dir, '{:0>2d}.hdf5'.format(index))
+    filename = os.path.join(ir_dir, '{:0>2d}.png'.format(index))
     if not os.path.isfile(filename):
       return False
     filename = os.path.join(depth_dir, '{:0>2d}.hdf5'.format(index))
@@ -237,6 +237,34 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
   
   return True
 
+def pre_process_depth(depth_data):
+  """pre_process_depth(depth_data) -> new_depth_data
+  This function preprocess depth data and return an image
+
+  **Parameters**
+
+    ``depth_data`` (numpy array):
+      The data coming from the depth channel 
+
+  **Returns**
+
+    ``new_depth_data`` (numpy array)
+      The preprocessed depth data, ready to be saved as an image
+  """
+  # get background / foreground (i.e. zero-valued pixels are considered as background)
+  background = numpy.where(depth_data <= 0)
+  foreground = numpy.where(depth_data > 0)
+  
+  # trick such that the highest value is the closest to the sensor
+  depth_data = depth_data * (-1)
+  max_significant = numpy.max(depth_data[foreground])
+  min_significant = numpy.min(depth_data[foreground])
+
+  # normalize to 0-255 and set background to zero
+  new_depth_data = 255 * ((depth_data - min_significant) / float(max_significant -  min_significant))
+  new_depth_data[background] = 0
+
+  return new_depth_data
   
 def main(user_input=None):
   """
@@ -278,13 +306,13 @@ def main(user_input=None):
   no_annotated_frame_counter = 0
 
   # go through the subjects 
-  subjects = []
-  subjects_ids = range(74, 76, 1)
-  for subject in subjects_ids:
-    subjects.append('{:0>3d}'.format(subject))
-  for subject in subjects:
+  #subjects = []
+  #subjects_ids = range(74, 76, 1)
+  #for subject in subjects_ids:
+  #  subjects.append('{:0>3d}'.format(subject))
+  #for subject in subjects:
   
-  #for subject in os.listdir(base_dir):
+  for subject in os.listdir(base_dir):
 
     sessions = ['controlled', 'dark', 'outdoor']
     # small hack to process FdV subjects ...
@@ -320,6 +348,7 @@ def main(user_input=None):
 
           # uncompress the 7z archive - both ir and depth - if needed
           if (len(os.listdir(ir_dir))) == 1 and ('ir.7z' in os.listdir(ir_dir)):
+            logger.debug("uncompressing NIR")
             ir_compressed = os.path.join(ir_dir, 'ir.7z')
             command = "7z x -y -o" + ir_dir + ' ' + ir_compressed
             try:
@@ -328,6 +357,7 @@ def main(user_input=None):
             except:
               pass
           if (len(os.listdir(ir_dir))) == 1 and ('ir.7z' in os.listdir(ir_dir)):
+            logger.debug("uncompressing depth")
             depth_compressed = os.path.join(depth_dir, 'depth.7z')
             command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
             try:
@@ -431,8 +461,9 @@ def main(user_input=None):
               logger.debug("Closest depth frame is at {0} with index {1} (color is at {2})".format(depth_timestamps[depth_index], depth_index, color_timestamps[toto]))
               depth_file = os.path.join(depth_dir, '{0}.bin'.format(depth_index))
               depth_data = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
-              # TODO: add the pre-processing of depth data - Guillaume HEUSCH, 21-04-2017
-              saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.hdf5'.format(saved_image_index))
+              depth_image = pre_process_depth(depth_data)
+              saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.png'.format(saved_image_index))
+              bob.io.base.save(depth_image.astype('uint8'), saved_depth)
   
               # plot saved data if asked for
               if bool(args['--plot']) and args['--verbose'] >= 2:
