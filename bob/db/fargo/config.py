@@ -8,6 +8,11 @@
 from bob.db.fargo import Database
 
 fargo_images_directory = "/idiap/project/fargo/database/images_public/"
+
+# Here are the eyes center derived from the annotations coming with the DB
+# You need to change this folder when you have eyes center from other sources
+# - from face detection
+# - from landmark detection
 fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_public/"
 
 database_public_MC_RGB = Database(
@@ -65,6 +70,8 @@ database_public_UO_depth = Database(
     protocol="public_UO_depth"
 )
 
+# POSE VARYING FACE AUTHENTICATION
+
 database_pos_pitch_small_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
@@ -72,3 +79,37 @@ database_pos_pitch_small_MC_RGB = Database(
     protocol="pos_pitch_small_MC_RGB"
 )
 
+database_pos_pitch_bottom_MC_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_MC_RGB"
+)
+
+database_pos_pitch_top_MC_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_MC_RGB"
+)
+
+database_pos_yaw_small_MC_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_MC_RGB"
+)
+
+database_pos_yaw_left_MC_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_MC_RGB"
+)
+
+database_pos_yaw_right_MC_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_MC_RGB"
+)
