@@ -66,7 +66,7 @@ database_public_UO_depth = Database(
 )
 
 database_pos_pitch_small_MC_RGB = Database(
-    original_directory='/idiap/project/fargo/database/images_pose_clusters',
+    original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_small_MC_RGB"
