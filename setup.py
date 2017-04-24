@@ -40,6 +40,7 @@ setup(
           'extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main',
           'convert_ir_and_depth.py = bob.db.fargo.scripts.convert_ir_and_depth:main',
           'reencode_color.py = bob.db.fargo.scripts.reencode_color:main',
+          'detect_faces_fargo.py = bob.db.fargo.scripts.detect_faces_fargo:main',
         ],
         
         'bob.db': [
