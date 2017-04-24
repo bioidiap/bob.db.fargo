@@ -8,7 +8,8 @@
 Usage:
   %(prog)s --imagesdir=<path> --posdir=<path> 
            [--mod=<string>] [--protocol=<string>]
-           [--log=<string>] [--verbose ...] [--plot]
+           [--log=<string>] [--gridcount] 
+           [--verbose ...] [--plot]
 
 Options:
   -h, --help                Show this screen.
@@ -18,6 +19,7 @@ Options:
       --mod=<string>        The modality (RGB or NIR) [default: RGB] 
       --protocol=<string>   The protocol (MC, UD or UO) [default: MC].
   -l, --log=<string>        Log filename [default: log_face_detect.txt]
+  -G, --gridcount           Display the number of objects and exits.
   -v, --verbose             Increase the verbosity (may appear multiple times).
   -P, --plot                Show some stuff
 
@@ -52,6 +54,8 @@ import bob.bio.face
 import bob.db.fargo
 import bob.ip.facedetect
 import bob.ip.draw
+
+import gridtk
 
 def main(user_input=None):
   """
@@ -96,6 +100,18 @@ def main(user_input=None):
   db = bob.db.fargo.Database()
   objs = db.objects(protocol='public_MC_RGB', groups=['world', 'dev', 'eval'])
 
+  # if we are on a grid environment, just find what I have to process.
+  if os.environ.has_key('SGE_TASK_ID'):
+    pos = int(os.environ['SGE_TASK_ID']) - 1
+    if pos >= len(objs):
+      raise RuntimeError, "Grid request for job %d on a setup with %d jobs" % \
+          (pos, len(objs))
+    objs = [objs[pos]]
+
+  if args['--gridcount']:
+    print len(objs)
+    sys.exit()
+
   # counters
   image_counter = 0
   no_face_detected = 0
@@ -127,6 +143,7 @@ def main(user_input=None):
       logger.warn("No face detected in {0}".format(image.path))
       logfile.write("No face detected in {0}".format(image.path))
       no_face_detected += 1
+      continue
 
     if bool(args['--plot']):
       from matplotlib import pyplot
