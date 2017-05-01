@@ -38,6 +38,7 @@ setup(
           'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main',
           'make_pose_lists.py = bob.db.fargo.scripts.make_pose_lists:main',
           'extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main',
+          'eyes_center_from_landmarks.py = bob.db.fargo.scripts.eyes_center_from_landmarks:main',
           'convert_ir_and_depth.py = bob.db.fargo.scripts.convert_ir_and_depth:main',
           'reencode_color.py = bob.db.fargo.scripts.reencode_color:main',
           'detect_faces_fargo.py = bob.db.fargo.scripts.detect_faces_fargo:main',
