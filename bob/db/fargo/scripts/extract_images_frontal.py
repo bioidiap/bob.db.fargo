@@ -356,7 +356,7 @@ def main(user_input=None):
               stdoutdata, stderrdata = p.communicate()
             except:
               pass
-          if (len(os.listdir(ir_dir))) == 1 and ('ir.7z' in os.listdir(ir_dir)):
+          if (len(os.listdir(depth_dir))) == 1 and ('depth.7z' in os.listdir(depth_dir)):
             logger.debug("uncompressing depth")
             depth_compressed = os.path.join(depth_dir, 'depth.7z')
             command = "7z x -y -o" + depth_dir + ' ' + depth_compressed
