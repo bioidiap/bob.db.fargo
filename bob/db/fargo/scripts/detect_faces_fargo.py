@@ -98,7 +98,8 @@ def main(user_input=None):
     channel = 'ir'
 
   db = bob.db.fargo.Database()
-  objs = db.objects(protocol='public_MC_RGB', groups=['world', 'dev', 'eval'])
+  protocol = 'public_' + args['--protocol'] + '_' + args['--mod']
+  objs = db.objects(protocol=protocol, groups=['world', 'dev', 'eval'])
 
   # if we are on a grid environment, just find what I have to process.
   if os.environ.has_key('SGE_TASK_ID'):
@@ -127,13 +128,17 @@ def main(user_input=None):
       logger.warn("pos file for {0} already exists".format(image.path))
       continue
     
-    
     logger.info("Detecting face in {0}".format(image.path))
     
     face_image = bob.io.base.load(filename) 
     bounding_box, quality = bob.ip.facedetect.detect_single_face(face_image)
+    if bounding_box is None:
+      logger.warn("No face detected in {0}".format(image.path))
+      logfile.write("No face detected in {0}".format(image.path))
+      no_face_detected += 1
+      continue
+
     eyes = bob.ip.facedetect.expected_eye_positions(bounding_box, padding = None)
-    
     reyex = int(eyes['reye'][1])
     reyey = int(eyes['reye'][0])
     leyex = int(eyes['leye'][1])
