@@ -150,15 +150,19 @@ def pre_process_depth(depth_data):
   # get background / foreground (i.e. zero-valued pixels are considered as background)
   background = numpy.where(depth_data <= 0)
   foreground = numpy.where(depth_data > 0)
-  
-  # trick such that the highest value is the closest to the sensor
-  depth_data = depth_data * (-1)
-  max_significant = numpy.max(depth_data[foreground])
-  min_significant = numpy.min(depth_data[foreground])
 
-  # normalize to 0-255 and set background to zero
-  new_depth_data = 255 * ((depth_data - min_significant) / float(max_significant -  min_significant))
-  new_depth_data[background] = 0
+  # sometimes there is no foreground ...
+  if foreground[0].size == 0:
+    new_depth_data = numpy.zeros(depth_data.shape, depth_data.dtype)
+  else:
+    # trick such that the highest value is the closest to the sensor
+    depth_data = depth_data * (-1)
+    max_significant = numpy.max(depth_data[foreground])
+    min_significant = numpy.min(depth_data[foreground])
+
+    # normalize to 0-255 and set background to zero
+    new_depth_data = 255 * ((depth_data - min_significant) / float(max_significant -  min_significant))
+    new_depth_data[background] = 0
 
   return new_depth_data
 
