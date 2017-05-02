@@ -76,43 +76,39 @@ database_public_UO_depth = Database(
     protocol="public_UO_depth"
 )
 
-# POSE VARYING FACE AUTHENTICATION
+# ===== POSE VARYING FACE AUTHENTICATION =====
 
+# MC-RGB
 database_pos_pitch_small_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_small_MC_RGB"
 )
-
 database_pos_pitch_bottom_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_bottom_MC_RGB"
 )
-
 database_pos_pitch_top_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_top_MC_RGB"
 )
-
 database_pos_yaw_small_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_small_MC_RGB"
 )
-
 database_pos_yaw_left_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_left_MC_RGB"
 )
-
 database_pos_yaw_right_MC_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
@@ -120,43 +116,37 @@ database_pos_yaw_right_MC_RGB = Database(
     protocol="pos_yaw_right_MC_RGB"
 )
 
-###
-
+# UD-RGB
 database_pos_pitch_small_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_small_UD_RGB"
 )
-
 database_pos_pitch_bottom_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_bottom_UD_RGB"
 )
-
 database_pos_pitch_top_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_top_UD_RGB"
 )
-
 database_pos_yaw_small_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_small_UD_RGB"
 )
-
 database_pos_yaw_left_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_left_UD_RGB"
 )
-
 database_pos_yaw_right_UD_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
@@ -164,43 +154,37 @@ database_pos_yaw_right_UD_RGB = Database(
     protocol="pos_yaw_right_UD_RGB"
 )
 
-###
-
+# UO-RGB
 database_pos_pitch_small_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_small_UO_RGB"
 )
-
 database_pos_pitch_bottom_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_bottom_UO_RGB"
 )
-
 database_pos_pitch_top_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_pitch_top_UO_RGB"
 )
-
 database_pos_yaw_small_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_small_UO_RGB"
 )
-
 database_pos_yaw_left_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
     original_extension=".png",
     protocol="pos_yaw_left_UO_RGB"
 )
-
 database_pos_yaw_right_UO_RGB = Database(
     original_directory=fargo_images_directory,
     annotation_directory=None, 
@@ -208,4 +192,117 @@ database_pos_yaw_right_UO_RGB = Database(
     protocol="pos_yaw_right_UO_RGB"
 )
 
-### 
+# MC-NIR 
+database_pos_pitch_small_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_small_MC_NIR"
+)
+database_pos_pitch_bottom_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_MC_NIR"
+)
+database_pos_pitch_top_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_MC_NIR"
+)
+database_pos_yaw_small_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_MC_NIR"
+)
+database_pos_yaw_left_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_MC_NIR"
+)
+database_pos_yaw_right_MC_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_MC_NIR"
+)
+
+# UD-NIR
+database_pos_pitch_small_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_small_UD_NIR"
+)
+database_pos_pitch_bottom_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_UD_NIR"
+)
+database_pos_pitch_top_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_UD_NIR"
+)
+database_pos_yaw_small_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_UD_NIR"
+)
+database_pos_yaw_left_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_UD_NIR"
+)
+database_pos_yaw_right_UD_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_UD_NIR"
+)
+
+# UO-NIR
+database_pos_pitch_small_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_small_UO_NIR"
+)
+database_pos_pitch_bottom_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_UO_NIR"
+)
+database_pos_pitch_top_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_UO_NIR"
+)
+database_pos_yaw_small_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_UO_NIR"
+)
+database_pos_yaw_left_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_UO_NIR"
+)
+database_pos_yaw_right_UO_NIR = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_UO_NIR"
+)
+
