@@ -11,3 +11,6 @@ src
 develop-eggs
 sphinx
 .cache
+*.sql3
+log*
+test*
