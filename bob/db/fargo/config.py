@@ -13,7 +13,13 @@ fargo_images_directory = "/idiap/project/fargo/database/images_public/"
 # You need to change this folder when you have eyes center from other sources
 # - from face detection
 # - from landmark detection
+
+# EYES FROM ORIGINAL LANDMARKS
 fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_public/"
+# EYES FROM BOB FACE DETECTION
+#fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_facedetect/"
+# EYES FROM XIAOJANG'S LANDMARKS
+#fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_facedetect/"
 
 database_public_MC_RGB = Database(
     original_directory=fargo_images_directory,
@@ -113,3 +119,93 @@ database_pos_yaw_right_MC_RGB = Database(
     original_extension=".png",
     protocol="pos_yaw_right_MC_RGB"
 )
+
+###
+
+database_pos_pitch_small_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_small_UD_RGB"
+)
+
+database_pos_pitch_bottom_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_UD_RGB"
+)
+
+database_pos_pitch_top_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_UD_RGB"
+)
+
+database_pos_yaw_small_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_UD_RGB"
+)
+
+database_pos_yaw_left_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_UD_RGB"
+)
+
+database_pos_yaw_right_UD_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_UD_RGB"
+)
+
+###
+
+database_pos_pitch_small_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_small_UO_RGB"
+)
+
+database_pos_pitch_bottom_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_bottom_UO_RGB"
+)
+
+database_pos_pitch_top_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch_top_UO_RGB"
+)
+
+database_pos_yaw_small_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_small_UO_RGB"
+)
+
+database_pos_yaw_left_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_left_UO_RGB"
+)
+
+database_pos_yaw_right_UO_RGB = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw_right_UO_RGB"
+)
+
+### 
