@@ -42,6 +42,7 @@ setup(
           'convert_ir_and_depth.py = bob.db.fargo.scripts.convert_ir_and_depth:main',
           'reencode_color.py = bob.db.fargo.scripts.reencode_color:main',
           'detect_faces_fargo.py = bob.db.fargo.scripts.detect_faces_fargo:main',
+          'crop_faces.py = bob.db.fargo.scripts.crop_faces:main',
         ],
         
         'bob.db': [
