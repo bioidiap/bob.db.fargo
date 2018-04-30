@@ -102,15 +102,22 @@ def main(user_input=None):
   objs = db.objects(protocol=protocol, groups=['world', 'dev', 'eval'])
 
   # if we are on a grid environment, just find what I have to process.
-  if os.environ.has_key('SGE_TASK_ID'):
-    pos = int(os.environ['SGE_TASK_ID']) - 1
-    if pos >= len(objs):
-      raise RuntimeError, "Grid request for job %d on a setup with %d jobs" % \
-          (pos, len(objs))
-    objs = [objs[pos]]
+  pos = 0
+  if sys.version_info[0] < 3:
+    if os.environ.has_key('SGE_TASK_ID'):
+      pos = int(os.environ['SGE_TASK_ID']) - 1
+      if pos >= len(objs):
+        raise RuntimeError ("Grid request for job {} on a setup with {} jobs".format(pos, len(objs)))
+      objs = [objs[pos]]
+  else:
+    if 'SGE_TASK_ID' in os.environ:
+      pos = int(os.environ['SGE_TASK_ID']) - 1
+      if pos >= len(objs):
+        raise RuntimeError ("Grid request for job {} on a setup with {} jobs".format(pos, len(objs)))
+      objs = [objs[pos]]
 
   if args['--gridcount']:
-    print len(objs)
+    logger.info("{}".format(len(objs)))
     sys.exit()
 
   # counters
@@ -152,10 +159,16 @@ def main(user_input=None):
 
     if bool(args['--plot']):
       from matplotlib import pyplot
-      bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255, 0, 0))
-      bob.ip.draw.cross(face_image, (reyey, reyex), 10, (0, 255, 0))
-      bob.ip.draw.cross(face_image, (leyey, leyex), 10, (0, 255, 0))
-      pyplot.imshow(numpy.rollaxis(numpy.rollaxis(face_image, 2),2))
+      if modality == 'RGB':
+        bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255, 0, 0))
+        bob.ip.draw.cross(face_image, (reyey, reyex), 10, (0, 255, 0))
+        bob.ip.draw.cross(face_image, (leyey, leyex), 10, (0, 255, 0))
+        pyplot.imshow(numpy.rollaxis(numpy.rollaxis(face_image, 2),2))
+      else: 
+        bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255))
+        bob.ip.draw.cross(face_image, (reyey, reyex), 5, (255))
+        bob.ip.draw.cross(face_image, (leyey, leyex), 5, (255))
+        pyplot.imshow(face_image, cmap='gray')
       pyplot.show()
     
 
