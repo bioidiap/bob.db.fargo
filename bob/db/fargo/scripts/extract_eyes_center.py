@@ -243,8 +243,8 @@ def draw_landmarks(frame, annotation_file, retrieved_landmarks):
   original_landmarks = get_landmarks(annotation_file)
   for i in original_landmarks.keys():
     bob.ip.draw.plus(frame, (original_landmarks[i][0], original_landmarks[i][1]), 4, (255,0,0))
-  for i in retrieved_landmarks.keys():  
-    bob.ip.draw.cross(frame, (retrieved_landmarks[i][0], retrieved_landmarks[i][1]), 4, (0,255,0))
+  #for i in retrieved_landmarks.keys():  
+    #bob.ip.draw.cross(frame, (retrieved_landmarks[i][0], retrieved_landmarks[i][1]), 4, (0,255,0))
   return frame 
 
 def draw_eyes_corner(frame, annotation_file, draw_landmarks=True):
@@ -750,7 +750,8 @@ def main(user_input=None):
           # plot stuff if asked for 
           if bool(args['--plot']):
             color_frame = get_color_frame(color_dir)
-            display_color = draw_eyes_center(color_frame, color_eyes)
+            display_color = color_frame.copy() 
+            display_color = draw_eyes_center(display_color, color_eyes)
             ir_frame = get_data_frame(ir_dir)
             display_ir = draw_eyes_center(ir_frame, ir_eyes)
             from matplotlib import pyplot
@@ -763,6 +764,7 @@ def main(user_input=None):
             pyplot.show()
 
             if args['--verbose'] >= 2: 
+              display_color = color_frame.copy() 
               display_color = draw_landmarks(color_frame, color_file, color_landmarks)
               display_ir = draw_landmarks(ir_frame, ir_file, ir_landmarks)
               f, axarr = pyplot.subplots(1, 2)
