@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
-# Mon 21 Nov 08:25:54 CET 2016
 
 """(Frontal) Image extractor for the FARGO videos (%(version)s)
 
@@ -72,7 +70,7 @@ def find_closest_frame_index(color_time, other_timestamps):
       Index of the closest frame
   """
   return_index = -1
-  diff = sys.maxint
+  diff = sys.maxsize
   for index in other_timestamps:
     if abs(other_timestamps[index] - color_time) < diff:
       diff = abs(other_timestamps[index] - color_time)

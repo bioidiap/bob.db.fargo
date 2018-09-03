@@ -18,8 +18,6 @@ fargo_images_directory = "/idiap/project/fargo/database/images_public/"
 fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_public/"
 # EYES FROM BOB FACE DETECTION
 #fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_facedetect/"
-# EYES FROM XIAOJANG'S LANDMARKS
-#fargo_annotations_directory = "/idiap/project/fargo/database/eyes_center_facedetect/"
 
 database_public_MC_RGB = Database(
     original_directory=fargo_images_directory,

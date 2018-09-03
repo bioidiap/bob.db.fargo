@@ -714,7 +714,6 @@ def main(user_input=None):
           # check if we have all we need (possibly after re-projection)
           if is_annotation_complete(color_landmarks) and is_annotation_complete(ir_landmarks) and is_annotation_complete(depth_landmarks):
 
-            print "I'm saving from original annotations (possibly reprojected)"
             # get the eyes center 
             color_eyes = get_eyes_center(color_landmarks)
             ir_eyes = get_eyes_center(ir_landmarks)
