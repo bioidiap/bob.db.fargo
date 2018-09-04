@@ -6,9 +6,9 @@ package:
   version: {{ environ.get('BOB_PACKAGE_VERSION', '0.0.1') }}
 
 build:
-   entry_points:
-    - extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main
-    - extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main
+  entry_points:
+    - bob_db_fargo_extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main
+    - bob_db_fargo_extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main
   number: {{ environ.get('BOB_BUILD_NUMBER', 0) }}
   run_exports:
     - {{ pin_subpackage(name) }}
@@ -34,7 +34,6 @@ requirements:
     - bob.ip.draw
     - bob.db.base
     - docopt
-    - numpy
   run:
     - python
     - setuptools
@@ -43,6 +42,7 @@ requirements:
     - gridtk
     - matplotlib
     - opencv
+
 test:
   imports:
     - {{ name }}
@@ -63,6 +63,6 @@ test:
 
 about:
   home: https://www.idiap.ch/software/bob/
-  summary: Bob Database interface for the FARGO database 
-  license: BSD 
-  license_family: BSD
+  license: BSD 3-Clause
+  summary: Bob Database interface for the FARGO database
+  license_family: BSD 
