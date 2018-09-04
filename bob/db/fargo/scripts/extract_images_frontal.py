@@ -232,7 +232,7 @@ def check_if_recording_is_ok(images_dir, subject, session, condition, recording)
     filename = os.path.join(ir_dir, '{:0>2d}.png'.format(index))
     if not os.path.isfile(filename):
       return False
-    filename = os.path.join(depth_dir, '{:0>2d}.hdf5'.format(index))
+    filename = os.path.join(depth_dir, '{:0>2d}.png'.format(index))
     if not os.path.isfile(filename):
       return False
   
