@@ -1,38 +1,36 @@
 .. vim: set fileencoding=utf-8 :
-.. Thu 22 Dec 09:54:50 CET 2016
+.. Tue  4 Sep 12:20:34 CEST 2018
 
-.. image:: http://img.shields.io/badge/docs-stable-yellow.png
-   :target: http://pythonhosted.org/bob.db.fargo/index.html
-.. image:: http://img.shields.io/badge/docs-latest-orange.png
-   :target: https://www.idiap.ch/software/bob/docs/latest/bob/bob.db.fargo/master/index.html
+.. image:: https://img.shields.io/badge/docs-stable-yellow.svg
+   :target: https://www.idiap.ch/software/bob/docs/bob/bob.db.fargo/stable/index.html
+.. image:: https://img.shields.io/badge/docs-latest-orange.svg
+   :target: https://www.idiap.ch/software/bob/docs/bob/bob.db.fargo/master/index.html
 .. image:: https://gitlab.idiap.ch/bob/bob.db.fargo/badges/master/build.svg
+   :target: https://gitlab.idiap.ch/bob/bob.db.fargo/commits/master
+.. image:: https://gitlab.idiap.ch/bob/bob.db.fargo/badges/master/coverage.svg
    :target: https://gitlab.idiap.ch/bob/bob.db.fargo/commits/master
 .. image:: https://img.shields.io/badge/gitlab-project-0000c0.svg
    :target: https://gitlab.idiap.ch/bob/bob.db.fargo
-.. image:: http://img.shields.io/pypi/v/bob.db.fargo.png
-   :target: https://pypi.python.org/pypi/bob.db.fargo
-.. image:: http://img.shields.io/pypi/dm/bob.db.fargo.png
+.. image:: https://img.shields.io/pypi/v/bob.db.fargo.svg
    :target: https://pypi.python.org/pypi/bob.db.fargo
 
 
-==================================
- FARGO Database Access API for Bob
-==================================
+=================================
+FARGO Database Access API for Bob
+=================================
 
 This package is part of the signal-processing and machine learning toolbox
-Bob_. It contains an interface for the evaluation protocols of the FARGO 
-Database. Notice this package does not contain the raw data files from this
-dataset.
+Bob_. It contains an interface for the evaluation protocols of the `FARGO <https://www.idiap.ch/dataset/fargo>`_ Database. 
+Notice this package does not contain the raw data files from this dataset, which need to be obtained through the link above. 
 
 
 Installation
 ------------
 
-Follow our `installation`_ instructions. Then, using the Python interpreter
-provided by the distribution, bootstrap and buildout this package::
+Complete Bob's `installation`_ instructions. Then, to install this package,
+run::
 
-  $ python bootstrap-buildout.py
-  $ ./bin/buildout
+  $ conda install bob.db.fargo
 
 
 Contact

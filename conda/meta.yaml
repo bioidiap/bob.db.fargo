@@ -1,0 +1,72 @@
+{% set name = 'bob.db.fargo' %}
+{% set project_dir = environ.get('RECIPE_DIR') + '/..' %}
+
+package:
+  name: {{ name }}
+  version: {{ environ.get('BOB_PACKAGE_VERSION', '0.0.1') }}
+
+build:
+  <ENTRY_POINTS>
+   entry_points:
+    - extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main
+    - extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main
+  number: {{ environ.get('BOB_BUILD_NUMBER', 0) }}
+  run_exports:
+    - {{ pin_subpackage(name) }}
+  script:
+    - cd {{ project_dir }}
+    {% if environ.get('BUILD_EGG') %}
+    - python setup.py sdist --formats=zip
+    {% endif %}
+    - python setup.py install --single-version-externally-managed --record record.txt
+
+requirements:
+  host:
+    - python {{ python }}
+    - setuptools {{ setuptools }}
+    - bob.extension
+    - bob.io.base
+    - bob.io.image
+    - bob.io.video
+    - bob.bio.base
+    - bob.bio.face
+    - bob.ip.facedetect
+    - bob.ip.color
+    - bob.ip.draw
+    - bob.db.base
+    - docopt
+    - numpy
+    - json
+setuptools
+  run:
+    - python
+    - setuptools
+    - numpy
+    - json
+    - docopt
+    - gridtk
+    - matplotlib
+    - opencv
+test:
+  imports:
+    - {{ name }}
+  commands:
+    - bob_db_fargo_extract_images_frontal.py --help
+    - bob_db_fargo_extract_eyes_center.py --help
+    - nosetests --with-coverage --cover-package={{ name }} -sv {{ name }}
+    - sphinx-build -aEW {{ project_dir }}/doc {{ project_dir }}/sphinx
+    - sphinx-build -aEb doctest {{ project_dir }}/doc sphinx
+    - conda inspect linkages -p $PREFIX {{ name }}  # [not win]
+    - conda inspect objects -p $PREFIX {{ name }}  # [osx]
+  requires:
+    - bob-devel {{ bob_devel }}.*
+    - nose
+    - coverage
+    - sphinx
+    - sphinx_rtd_theme
+
+about:
+  home: https://www.idiap.ch/software/bob/
+  summary: Bob Database interface for the FARGO database 
+  license: BSD 
+  license_family: BSD
