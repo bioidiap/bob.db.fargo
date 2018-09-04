@@ -35,13 +35,10 @@ requirements:
     - bob.db.base
     - docopt
     - numpy
-    - json
-setuptools
   run:
     - python
     - setuptools
     - numpy
-    - json
     - docopt
     - gridtk
     - matplotlib
