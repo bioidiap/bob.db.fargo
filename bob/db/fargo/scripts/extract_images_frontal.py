@@ -100,6 +100,7 @@ def load_timestamps(filename):
     line = line.rstrip('\n')
     splitted = line.split(' ')
     timestamps[int(splitted[0])] = int(splitted[1])   
+  f.close()
   return timestamps
 
 
@@ -128,6 +129,7 @@ def get_first_annotated_frame_index(filename):
     first_line = f.readline().rstrip()
     first_line = first_line.split(' ')
     indices = (int(first_line[0]), int(first_line[1]))
+    f.close()
   except IOError:
     status = -1 
     indices = (0, 0)
@@ -169,6 +171,7 @@ def get_annotated_image(first_annotated_frame_indices, annotation_dir):
       line = line.rstrip('\n')
       splitted = line.split(' ')
       annotation_timestamps.append((int(splitted[0]), int(splitted[1])))   
+    f.close()
   except IOError:
     pass
  
