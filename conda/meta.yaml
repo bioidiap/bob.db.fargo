@@ -6,7 +6,6 @@ package:
   version: {{ environ.get('BOB_PACKAGE_VERSION', '0.0.1') }}
 
 build:
-  <ENTRY_POINTS>
    entry_points:
     - extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main
     - extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main
