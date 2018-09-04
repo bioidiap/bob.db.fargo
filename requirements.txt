@@ -12,6 +12,4 @@ gridtk
 matplotlib
 docopt
 numpy
-opencv
-json
 setuptools
