@@ -446,22 +446,25 @@ def main(user_input=None):
               # find the closest ir frame, and save the image 
               ir_index = find_closest_frame_index(color_timestamps[toto], ir_timestamps)
               logger.debug("Closest IR frame is at {0} with index {1} (color is at {2})".format(ir_timestamps[ir_index], ir_index, color_timestamps[toto]))
+              
               ir_file = os.path.join(ir_dir, '{0}.bin'.format(ir_index))
-              ir_data = numpy.fromfile(ir_file, dtype=numpy.int16).reshape(-1, 640)
-              # kind of normalization that looks OK
-              ir_image = ir_data / 4.0 
-              saved_ir_image = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.png'.format(saved_image_index))
-              bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
+              with open(ir_file) as irf:
+                ir_data = numpy.fromfile(irf, dtype=numpy.int16).reshape(-1, 640)
+                # kind of normalization that looks OK
+                ir_image = ir_data / 4.0 
+                saved_ir_image = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'ir', '{:0>2d}.png'.format(saved_image_index))
+                bob.io.base.save(ir_image.astype('uint8'), saved_ir_image)
               
               # find the closest depth frame, and save the DATA 
               # note that the depth data have been pre-processed and turned into images for (our) face verificaton purposes
               depth_index = find_closest_frame_index(color_timestamps[toto], depth_timestamps)
               logger.debug("Closest depth frame is at {0} with index {1} (color is at {2})".format(depth_timestamps[depth_index], depth_index, color_timestamps[toto]))
               depth_file = os.path.join(depth_dir, '{0}.bin'.format(depth_index))
-              depth_data = numpy.fromfile(depth_file, dtype=numpy.int16).reshape(-1, 640)
-              depth_image = pre_process_depth(depth_data)
-              saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.png'.format(saved_image_index))
-              bob.io.base.save(depth_image.astype('uint8'), saved_depth)
+              with open(depth_file) as df:
+                depth_data = numpy.fromfile(df, dtype=numpy.int16).reshape(-1, 640)
+                depth_image = pre_process_depth(depth_data)
+                saved_depth = os.path.join(args['--imagesdir'], subject, session, condition, recording, 'depth', '{:0>2d}.png'.format(saved_image_index))
+                bob.io.base.save(depth_image.astype('uint8'), saved_depth)
   
               # plot saved data if asked for
               if bool(args['--plot']) and args['--verbose'] >= 2:
@@ -472,7 +475,7 @@ def main(user_input=None):
                 axarr[0].set_title("Color")
                 axarr[1].imshow(ir_image, cmap='gray')
                 axarr[1].set_title("NIR")
-                axarr[2].imshow(depth_data)
+                axarr[2].imshow(depth_data, cmap='gray')
                 axarr[2].set_title("Depth")
                 pyplot.show()
               
