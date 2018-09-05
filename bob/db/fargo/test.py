@@ -7,13 +7,12 @@
 """A few checks on the protocols of the FARGO public database 
 """
 
-import bob.db.fargo
-
+from .query import Database
 from bob.bio.base.test.test_database_implementations import check_database
 
 
 def test_fargo():
-    db = bob.bio.base.load_resource('fargo_public_MC_RGB', 'database', preferred_package='bob.db.fargo')
+    db = Database() 
     check_database(db, protocol='public_MC_RGB', groups=('dev', 'eval'))
 
 
@@ -21,7 +20,7 @@ def test_query_public_MC_RGB():
   """
   Test some queries for the public MC RGB protocol
   """
-  db = bob.db.fargo.Database()
+  db = Database()
 
   assert len(db.client_ids(protocol='public_MC_RGB')) == 75 # 75 client ids for world, dev and eval
   assert len(db.client_ids(protocol='public_MC_RGB', groups='world')) == 25 # 25 client ids for world
@@ -49,7 +48,7 @@ def test_query_public_UD_RGB():
   """
   Test some queries for the public UD RGB protocol
   """
-  db = bob.db.fargo.Database()
+  db = Database()
   
   assert len(db.client_ids(protocol='public_UD_RGB')) == 75 # 75 client ids for world, dev and eval
   assert len(db.client_ids(protocol='public_UD_RGB', groups='world')) == 25 # 25 client ids for world
@@ -77,7 +76,7 @@ def test_query_public_UO_RGB():
   """
   Test some queries for the public UO RGB protocol
   """
-  db = bob.db.fargo.Database()
+  db = Database()
   
   assert len(db.client_ids(protocol='public_UO_RGB')) == 75 # 75 client ids for world, dev and eval
   assert len(db.client_ids(protocol='public_UO_RGB', groups='world')) == 25 # 25 client ids for world
@@ -105,7 +104,7 @@ def test_query_public_NIR():
   """
   Test some queries for the public NIR protocols
   """
-  db = bob.db.fargo.Database()
+  db = Database()
   
   assert len(db.client_ids(protocol='public_MC_NIR')) == 75 # 75 client ids for world, dev and eval
   assert len(db.client_ids(protocol='public_MC_NIR', groups='dev')) == 25 # 25 client ids for dev
@@ -128,7 +127,7 @@ def test_query_public_depth():
   """
   Test some queries for the public depth protocols
   """
-  db = bob.db.fargo.Database()
+  db = Database()
   
   assert len(db.client_ids(protocol='public_MC_depth')) == 75 # 75 client ids for world, dev and eval
   assert len(db.client_ids(protocol='public_MC_depth', groups='dev')) == 25 # 25 client ids for dev

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
-# Thu 22 Dec 16:20:02 CET 2016
 
 import bob.bio.base
 from bob.bio.face.database import FaceBioFile
