@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
-# Mon 24 Apr 09:35:40 CEST 2017
 
 """ Run face detection on the FARGO database (%(version)s) 
 
@@ -32,6 +30,7 @@ Example:
 See '%(prog)s --help' for more information.
 
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -117,7 +116,7 @@ def main(user_input=None):
       objs = [objs[pos]]
 
   if args['--gridcount']:
-    logger.info("{}".format(len(objs)))
+    print(len(objs))
     sys.exit()
 
   # counters
