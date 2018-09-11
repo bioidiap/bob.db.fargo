@@ -7,19 +7,20 @@ Usage:
   %(prog)s --imagesdir=<path> --posdir=<path> 
            [--mod=<string>] [--protocol=<string>]
            [--log=<string>] [--gridcount] 
-           [--verbose ...] [--plot]
+           [--verbose ...] [--plot] [--facedetect=<string>]
 
 Options:
-  -h, --help                Show this screen.
-  -V, --version             Show version.
-  -i, --imagesdir=<path>    Where the face images are stored.
-  -p, --posdir=<path>       Where to store results.
-      --mod=<string>        The modality (RGB or NIR) [default: RGB] 
-      --protocol=<string>   The protocol (MC, UD or UO) [default: MC].
-  -l, --log=<string>        Log filename [default: log_face_detect.txt]
-  -G, --gridcount           Display the number of objects and exits.
-  -v, --verbose             Increase the verbosity (may appear multiple times).
-  -P, --plot                Show some stuff
+  -h, --help                  Show this screen.
+  -V, --version               Show version.
+  -i, --imagesdir=<path>      Where the face images are stored.
+  -p, --posdir=<path>         Where to store results.
+      --mod=<string>          The modality (RGB or NIR) [default: RGB] 
+      --protocol=<string>     The protocol (MC, UD or UO) [default: MC].
+  -l, --log=<string>          Log filename [default: log_face_detect.txt]
+  -G, --gridcount             Display the number of objects and exits.
+  -v, --verbose               Increase the verbosity (may appear multiple times).
+  -P, --plot                  Show some stuff
+      --facedetect=<string>   Face detection algorithm [default: bob]
 
 Example:
 
@@ -87,6 +88,16 @@ def main(user_input=None):
   if not (args['--mod'] == 'RGB' or args['--mod'] == 'NIR'): 
     logger.warning("Please provide a valid modality, {0} is not !".format(args['--mod']))
     sys.exit()
+  if not (args['--facedetect'] == 'bob' or args['--facedetect'] == 'dlib' or args['--facedetect'] == 'mtcnn'): 
+    logger.warning("Please provide a valid facedetector, {0} is not !".format(args['--mod']))
+    sys.exit()
+
+  if args['--facedetect'] == 'bob':
+    import bob.ip.facedetect
+  if args['--facedetect'] == 'dlib':
+    import bob.ip.dlib
+  if args['--facedetect'] == 'mtcnn':
+    import bob.ip.mtcnn
 
   # get the modality and the channel
   if args['--mod'] == 'RGB':
@@ -137,18 +148,39 @@ def main(user_input=None):
     logger.info("Detecting face in {0}".format(image.path))
     
     face_image = bob.io.base.load(filename) 
-    bounding_box, quality = bob.ip.facedetect.detect_single_face(face_image)
-    if bounding_box is None:
-      logger.warn("No face detected in {0}".format(image.path))
-      logfile.write("No face detected in {0}".format(image.path))
-      no_face_detected += 1
-      continue
+    
+    # bob.ip.facedetect
+    if args['--facedetect'] == 'bob':
+      bounding_box, quality = bob.ip.facedetect.detect_single_face(face_image)
+      if bounding_box is None:
+        logger.warn("No face detected in {0}".format(image.path))
+        logfile.write("No face detected in {0}".format(image.path))
+        no_face_detected += 1
+        continue
+      eyes = bob.ip.facedetect.expected_eye_positions(bounding_box, padding = None)
+      reyex = int(eyes['reye'][1])
+      reyey = int(eyes['reye'][0])
+      leyex = int(eyes['leye'][1])
+      leyey = int(eyes['leye'][0])
+    
+    # bob.ip.dlib
+    if args['--facedetect'] == 'dlib':
+      landmarks = bob.ip.dlib.DlibLandmarkExtraction(bob_landmark_format=True)(face_image)
+      
+      # warning: left and right eyes are swapped according to dlib
+      leyex = int(landmarks['reye'][1])
+      leyey = int(landmarks['reye'][0])
+      reyex = int(landmarks['leye'][1])
+      reyey = int(landmarks['leye'][0])
 
-    eyes = bob.ip.facedetect.expected_eye_positions(bounding_box, padding = None)
-    reyex = int(eyes['reye'][1])
-    reyey = int(eyes['reye'][0])
-    leyex = int(eyes['leye'][1])
-    leyey = int(eyes['leye'][0])
+    # bob.ip.mtcnn
+    if args['--facedetect'] == 'mtcnn':
+      bounding_box, landmarks = bob.ip.mtcnn.FaceDetector().detect_single_face(face_image)
+      reyex = int(landmarks['reye'][1])
+      reyey = int(landmarks['reye'][0])
+      leyex = int(landmarks['leye'][1])
+      leyey = int(landmarks['leye'][0])
+
 
     if reyex == 0 or reyey == 0 or leyex == 0 or leyey == 0:
       logger.warn("No face detected in {0}".format(image.path))
@@ -159,12 +191,12 @@ def main(user_input=None):
     if bool(args['--plot']):
       from matplotlib import pyplot
       if modality == 'RGB':
-        bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255, 0, 0))
+        #bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255, 0, 0))
         bob.ip.draw.cross(face_image, (reyey, reyex), 10, (0, 255, 0))
         bob.ip.draw.cross(face_image, (leyey, leyex), 10, (0, 255, 0))
         pyplot.imshow(numpy.rollaxis(numpy.rollaxis(face_image, 2),2))
       else: 
-        bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255))
+        #bob.ip.draw.box(face_image, bounding_box.topleft, bounding_box.size, color=(255))
         bob.ip.draw.cross(face_image, (reyey, reyex), 5, (255))
         bob.ip.draw.cross(face_image, (leyey, leyex), 5, (255))
         pyplot.imshow(face_image, cmap='gray')
