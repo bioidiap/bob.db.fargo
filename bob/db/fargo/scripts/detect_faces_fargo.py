@@ -166,12 +166,14 @@ def main(user_input=None):
     # bob.ip.dlib
     if args['--facedetect'] == 'dlib':
       landmarks = bob.ip.dlib.DlibLandmarkExtraction(bob_landmark_format=True)(face_image)
-      
-      # warning: left and right eyes are swapped according to dlib
-      leyex = int(landmarks['reye'][1])
-      leyey = int(landmarks['reye'][0])
-      reyex = int(landmarks['leye'][1])
-      reyey = int(landmarks['leye'][0])
+      if landmarks is None:
+        leyex = leyey = reyex = reyey = 0
+      else:
+        # warning: left and right eyes are swapped according to dlib
+        leyex = int(landmarks['reye'][1])
+        leyey = int(landmarks['reye'][0])
+        reyex = int(landmarks['leye'][1])
+        reyey = int(landmarks['leye'][0])
 
     # bob.ip.mtcnn
     if args['--facedetect'] == 'mtcnn':
@@ -186,6 +188,19 @@ def main(user_input=None):
       logger.warn("No face detected in {0}".format(image.path))
       logfile.write("No face detected in {0}".format(image.path))
       no_face_detected += 1
+      
+      # write dummy bbox, otherwise bob.bio.face's verify fails ...
+      # dummy eyes will be centered in the image
+      reyex = 0.4*face_image.shape[0]
+      reyey = 0.5*face_image.shape[1]
+      leyex = 0.6*face_image.shape[0]
+      reyey = 0.5*face_image.shape[1]
+      if not os.path.isdir(os.path.dirname(pos_filename)):
+        os.makedirs(os.path.dirname(pos_filename))
+      eyes_file = open(pos_filename, 'w')
+      eyes_file.write('{0} {1} {2} {3}'.format(reyex, reyey, leyex, leyey))
+      eyes_file.close()
+
       continue
 
     if bool(args['--plot']):
