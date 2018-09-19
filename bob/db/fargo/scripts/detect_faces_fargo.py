@@ -178,10 +178,13 @@ def main(user_input=None):
     # bob.ip.mtcnn
     if args['--facedetect'] == 'mtcnn':
       bounding_box, landmarks = bob.ip.mtcnn.FaceDetector().detect_single_face(face_image)
-      reyex = int(landmarks['reye'][1])
-      reyey = int(landmarks['reye'][0])
-      leyex = int(landmarks['leye'][1])
-      leyey = int(landmarks['leye'][0])
+      if landmarks is None:
+        leyex = leyey = reyex = reyey = 0
+      else:
+        reyex = int(landmarks['reye'][1])
+        reyey = int(landmarks['reye'][0])
+        leyex = int(landmarks['leye'][1])
+        leyey = int(landmarks['leye'][0])
 
 
     if reyex == 0 or reyey == 0 or leyex == 0 or leyey == 0:
