@@ -44,6 +44,10 @@ setup(
           'detect_faces_fargo.py = bob.db.fargo.scripts.detect_faces_fargo:main',
           'detect_faces_fargo_for_pose.py = bob.db.fargo.scripts.detect_faces_fargo_for_pose:main',
           'crop_faces.py = bob.db.fargo.scripts.crop_faces:main',
+          'crop_faces_for_article.py = bob.db.fargo.scripts.crop_faces_for_article:main',
+          'extract_images_pose_varying.py = bob.db.fargo.scripts.extract_images_pose_varying:main',
+          'make_pose_lists_pitch_yaw.py = bob.db.fargo.scripts.make_pose_lists_pitch_yaw:main',
+          'detect_faces_fargo_pose_varying.py = bob.db.fargo.scripts.detect_faces_fargo_pose_varying:main',
         ],
         
         'bob.db': [

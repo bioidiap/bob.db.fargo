@@ -74,6 +74,23 @@ database_public_UO_depth = Database(
     protocol="public_UO_depth"
 )
 
+# ===== POSE VARYING YAW AND PITCH ONLY =====
+
+database_pos_pitch = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_pitch"
+)
+
+database_pos_yaw = Database(
+    original_directory=fargo_images_directory,
+    annotation_directory=None, 
+    original_extension=".png",
+    protocol="pos_yaw"
+)
+
+
 # ===== POSE VARYING FACE AUTHENTICATION =====
 
 # MC-RGB
