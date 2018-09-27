@@ -122,7 +122,7 @@ def retrieve_past_timestamps(ref_timestamp, streams_stamps, prev_timestamp=0):
 
   closest_previous_index = 0 
   previous_stamps = {}
-  diff = sys.maxint
+  diff = sys.maxsize
   for index in streams_stamps:
     if (streams_stamps[index] > prev_timestamp) and (streams_stamps[index] <= ref_timestamp):
       previous_stamps[index] = streams_stamps[index]
@@ -470,7 +470,6 @@ def main(user_input=None):
           pitch_small_counter += len(pitch_small)
           pitch_top_counter += len(pitch_top)
           pitch_bottom_counter += len(pitch_bottom)
-          print "yaw_small_counter = {0}".format(yaw_small_counter)
 
 
   f = open('stats.txt', 'w')
