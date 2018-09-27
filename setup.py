@@ -48,6 +48,7 @@ setup(
           'extract_images_pose_varying.py = bob.db.fargo.scripts.extract_images_pose_varying:main',
           'make_pose_lists_pitch_yaw.py = bob.db.fargo.scripts.make_pose_lists_pitch_yaw:main',
           'detect_faces_fargo_pose_varying.py = bob.db.fargo.scripts.detect_faces_fargo_pose_varying:main',
+          'crop_faces_for_article_poses.py = bob.db.fargo.scripts.crop_faces_for_article_poses:main',
         ],
         
         'bob.db': [
