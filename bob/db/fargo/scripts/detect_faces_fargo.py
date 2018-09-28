@@ -57,6 +57,8 @@ import bob.ip.draw
 
 import gridtk
 
+from shutil import copyfile
+
 def main(user_input=None):
   """
   
@@ -140,9 +142,20 @@ def main(user_input=None):
     filename += '.png'
     pos_filename = os.path.join(args['--posdir'], image.path)
     pos_filename += '.pos'
+
+    # if the modality is NIR, also write pos file for depth (they're the same)
+    if modality == 'NIR':
+      pos_filename_depth = pos_filename.replace('ir', 'depth')
     
     if os.path.isfile(pos_filename):
       logger.warn("pos file for {0} already exists".format(image.path))
+
+      if not os.path.isfile(pos_filename_depth) and modality == 'NIR':
+        logger.warn("copying pos file {} for depth".format(image.path))
+        if not os.path.isdir(os.path.dirname(pos_filename_depth)):
+          os.makedirs(os.path.dirname(pos_filename_depth))
+        copyfile(pos_filename, pos_filename_depth)
+        
       continue
     
     logger.info("Detecting face in {0}".format(image.path))
@@ -204,6 +217,12 @@ def main(user_input=None):
       eyes_file.write('{0} {1} {2} {3}'.format(reyex, reyey, leyex, leyey))
       eyes_file.close()
 
+      # copy file for depth if we are processing NIR
+      if modality == 'NIR':
+        if not os.path.isdir(os.path.dirname(pos_filename_depth)):
+          os.makedirs(os.path.dirname(pos_filename_depth))
+        copyfile(pos_filename, pos_filename_depth)
+
       continue
 
     if bool(args['--plot']):
@@ -227,6 +246,12 @@ def main(user_input=None):
     eyes_file.write('{0} {1} {2} {3}'.format(reyex, reyey, leyex, leyey))
     eyes_file.close()
 
+    # copy file for depth if we are processing NIR
+    if modality == 'NIR':
+      if not os.path.isdir(os.path.dirname(pos_filename_depth)):
+        os.makedirs(os.path.dirname(pos_filename_depth))
+      copyfile(pos_filename, pos_filename_depth)
+    
     image_counter += 1 
 
   logger.info("{0} faces were not detected (out of {1})".format(no_face_detected, image_counter))
