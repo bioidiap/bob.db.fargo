@@ -70,9 +70,18 @@ def add_files(session, imagesdir, extension='.png'):
         
         shot = int(os.path.splitext(os.path.split(image_info)[1])[0])
         stem = image_info[0:-len(extension)]
+
+        # purpose
+        if client_id <= 25:
+          purpose = 'train'
+        else: 
+          if light == 'controlled' and recording == '0' and pose == 'frontal':
+            purpose = 'enroll'
+          else:
+            purpose = 'probe'
         
-        logger.info("Adding file {}: ID={}, light={}, device={}, pose={}, mod={}, rec={}, image #{}".format(stem, client_id, light, device, pose, modality, recording, shot))
-        o = File(id_file=id_file, client_id=client_id, path=stem, light=light, device=device, pose=pose, modality=modality, recording=recording)
+        logger.info("Adding file {}: ID={}, light={}, device={}, pose={}, mod={}, rec={}, image #{}, for {}".format(stem, client_id, light, device, pose, modality, recording, shot, purpose))
+        o = File(id_file=id_file, client_id=client_id, path=stem, light=light, device=device, pose=pose, modality=modality, recording=recording, purpose=purpose)
         session.add(o)
         id_file +=1
 

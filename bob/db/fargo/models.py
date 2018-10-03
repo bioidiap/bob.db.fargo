@@ -18,7 +18,6 @@ import bob.core
 logger = bob.core.log.setup('bob.db.fargo')
 Base = declarative_base()
 
-# this should be ok
 class Client(Base):
   """Database clients, marked by an integer identifier and the set they belong
   to"""
@@ -67,11 +66,6 @@ class File(Base, bob.db.base.File):
   recording_choices = ('0', '1')
   recording = Column(Enum(*recording_choices))
 
-  # shot (i.e. images extracted from the video sequence)
-  # TODO: How to handle that with varying number of poses ? - Guillaume HEUSCH, 02-10-2018
-  #shot_choices = tuple(['{:0>2d}'.format(s) for s in range(10)])
-  #shot = Column(Enum(*shot_choices))
-  
   # key id for files
   id = Column(Integer, primary_key=True)
   """Key identifier for files"""
@@ -79,11 +73,18 @@ class File(Base, bob.db.base.File):
   # client id of this file
   client_id = Column(Integer, ForeignKey('client.id'))  # for SQL
 
+  # for Python
+  client = relationship(Client, backref=backref('files', order_by=id))
+  """A direct link to the client object that this file belongs to"""
+
   # path of this file in the database
   path = Column(String(100), unique=True)
 
+  # purpose
+  purpose_choices = ('train', 'enroll', 'probe')
+  purpose = Column(Enum(*purpose_choices))
 
-  def __init__(self, id_file, client_id, path, light, device, pose, modality, recording):
+  def __init__(self, id_file, client_id, path, light, device, pose, modality, recording, purpose):
     bob.db.base.File.__init__(self, path=path)
     self.id = id_file
     self.client_id = client_id
@@ -92,7 +93,7 @@ class File(Base, bob.db.base.File):
     self.pose = pose
     self.modality = modality
     self.recording = recording
-    #self.shot = shot
+    self.purpose = purpose
 
   def __repr__(self):
     return "File('%s')" % self.path
