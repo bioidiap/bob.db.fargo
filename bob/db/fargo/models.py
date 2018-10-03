@@ -69,8 +69,8 @@ class File(Base, bob.db.base.File):
 
   # shot (i.e. images extracted from the video sequence)
   # TODO: How to handle that with varying number of poses ? - Guillaume HEUSCH, 02-10-2018
-  shot_choices = tuple(['{:0>2d}'.format(s) for s in range(10)])
-  shot = Column(Enum(*shot_choices))
+  #shot_choices = tuple(['{:0>2d}'.format(s) for s in range(10)])
+  #shot = Column(Enum(*shot_choices))
   
   # key id for files
   id = Column(Integer, primary_key=True)
@@ -83,7 +83,7 @@ class File(Base, bob.db.base.File):
   path = Column(String(100), unique=True)
 
 
-  def __init__(self, id_file, client_id, path):
+  def __init__(self, id_file, client_id, path, light, device, pose, modality, recording):
     bob.db.base.File.__init__(self, path=path)
     self.id = id_file
     self.client_id = client_id
@@ -92,7 +92,7 @@ class File(Base, bob.db.base.File):
     self.pose = pose
     self.modality = modality
     self.recording = recording
-    self.shot = shot
+    #self.shot = shot
 
   def __repr__(self):
     return "File('%s')" % self.path
