@@ -71,19 +71,24 @@ class Interface(BaseInterface):
     return pkg_resources.require('bob.db.%s' % self.name())[0].version
 
   def files(self):
-    return ()
+    from pkg_resources import resource_filename
+    raw_files = ('db.sql3',)
+    return [resource_filename(__name__, k) for k in raw_files]
 
   def type(self):
-    return 'text'
+    return 'sqlite'
 
   def add_commands(self, parser):
 
     from . import __doc__ as docs
 
-    subparsers = self.setup_parser(parser,
-        "FARGO database", docs)
+    subparsers = self.setup_parser(parser, "FARGO database", docs)
 
     import argparse
+    
+    # example: get the "create" action from a submodule
+    from .create import add_command as create_command
+    create_command(subparsers)
 
     # the "dumplist" action
     parser = subparsers.add_parser('dumplist', help=dumplist.__doc__)

@@ -4,6 +4,9 @@
 import os
 from .models import *
 
+from bob.db.base.driver import Interface as BaseInterface
+
+
 import bob.core
 logger = bob.core.log.setup('bob.db.fargo')
 
@@ -24,8 +27,14 @@ def add_clients(session, imagesdir, verbose=True):
   if verbose: 
     logger.info("Adding clients ...")
     for d in os.listdir(imagesdir):
-      print(d)
-
+      client_id = int(d)
+      if client_id <= 25:
+        group = 'train'
+      elif client_id <= 50:
+        group = 'dev'
+      else:
+        group = 'eval'
+      session.add(Client(client_id, group))
 
 def create_tables(args):
     """Creates all necessary tables (only to be used at the first time)"""
@@ -43,6 +52,7 @@ def create(args):
 
   from bob.db.base.utils import session_try_nolock
 
+  print(args)
   dbfile = args.files[0]
 
   if args.recreate:
@@ -74,7 +84,7 @@ def add_command(subparsers):
   parser.add_argument('-v', '--verbose', action='count', default=0,
                       help="Do SQL operations in a verbose way")
   parser.add_argument('-i', '--imagesdir', action='store',
-                      default='/idiap/temp/heusch/bob.project.fargo/images/'
+                      default='/idiap/temp/heusch/bob.project.fargo/images/',
                       metavar='DIR',
                       help="Change the path to the extracted images of the FARGO database (defaults to %(default)s)")
 

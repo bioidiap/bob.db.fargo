@@ -1,18 +1,58 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-import bob.bio.base
-from bob.bio.face.database import FaceBioFile
+import os
+from bob.db.base import utils
+from .models import *
 
-class Database(bob.bio.base.database.FileListBioDatabase):
-  """Wrapper class for the FARGO database for face verification
-  """
+#from .driver import Interface
+#INFO = Interface()
+#SQLITE_FILE = INFO.files()[0]
 
-  def __init__(self, original_directory=None, original_extension=None, **kwargs):
+import bob.db.base
+
+class Database(bob.db.base.SQLiteDatabase):
+
+  def __init__(self, 
+               original_directory=None, 
+               original_extension=None,
+               annotation_directory=None,
+               annotation_extension=None):
+    
     # call base class constructor
-    from pkg_resources import resource_filename
-    folder = resource_filename(__name__, 'lists')
-    super(Database, self).__init__(folder, 'fargo', bio_file_class=FaceBioFile,
-                                   original_directory=original_directory,
-                                   original_extension=original_extension, **kwargs)
+    # File -> from models.py
+    super(Database, self).__init__(SQLITE_FILE, File, original_directory, original_extension)
 
+    self.annotation_directory = annotation_directory
+    self.annotation_extension = annotation_extension
+
+  def objects(self, protocol='mc-rgb', groups=None, modality='rgb'):
+    """ Return a set of file
+
+    Parameters
+    ----------
+      protocol: py:obj:str
+        One of the protocols
+      groups: py:ojg:str or py:obj:tuple of py:obj:str
+        One of the groups ('world', 'dev', 'eval') or several of them
+
+    Returns
+    -------
+      py:obj:list
+        A list of File
+
+    Raises
+    ------
+
+    """
+    
+    protocol = self.check_parameters_for_validity(protocol, "protocol", self.protocols())
+    groups = self.check_parameters_for_validity(groups, "group", self.groups())
+    
+    retval = []
+
+    # training set: all images for the client id 1 to 25, controlled conditions, all device, all recordings 
+    if 'train' in groups:
+      q = self.query(Client).join(File)
+      q = q.filter(Client.set.in_(groups))
+      retval += list(q)
