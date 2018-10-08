@@ -17,14 +17,16 @@ class Database(bob.db.base.SQLiteDatabase):
                original_directory=None, 
                original_extension=None,
                annotation_directory=None,
-               annotation_extension=None):
+               annotation_extension=None,
+               protocol='mc-rgb'):
     
     super(Database, self).__init__(SQLITE_FILE, File, original_directory, original_extension)
 
     self.annotation_directory = annotation_directory
     self.annotation_extension = annotation_extension
+    self.protocol = protocol
 
-  def objects(self, protocol='mc-rgb', groups=None, purpose=None):
+  def objects(self, groups=None, purpose=None):
     """ Return a set of file
 
     Parameters
@@ -54,11 +56,11 @@ class Database(bob.db.base.SQLiteDatabase):
     q = self.query(File)
 
     # filter the modality, based on the protocol (hetereogeneous case will be addressed later)
-    if '-rgb' in protocol:
+    if '-rgb' in self.protocol:
       q = q.filter(File.modality == 'rgb')
-    if '-nir' in protocol:
+    if '-nir' in self.protocol:
       q = q.filter(File.modality == 'nir')
-    if '-depth' in protocol:
+    if '-depth' in self.protocol:
       q = q.filter(File.modality == 'depth')
    
     # filter the training set: regardless of the protocol, this is client 1 to 25, controlled and frontal
@@ -67,7 +69,7 @@ class Database(bob.db.base.SQLiteDatabase):
     list_train = list(q_train)
     #for i in list_train:
     #  print(i)
-    print("number of training images for protocol {} -> {}".format(protocol, len(list_train)))
+    print("number of training images for protocol {} -> {}".format(self.protocol, len(list_train)))
 
     # now get enrollment images for both dev and test
     q_enroll = q.filter(and_(File.client_id > 25, File.purpose == 'enroll'))
@@ -75,23 +77,53 @@ class Database(bob.db.base.SQLiteDatabase):
     #for i in list_enroll:
     #  print(i)
     #print(len(list_enroll))
-    print("number of enrollment images for protocol {} -> {}".format(protocol, len(list_enroll)))
+    print("number of enrollment images for protocol {} -> {}".format(self.protocol, len(list_enroll)))
 
     # now get the probes ...
     q_probe = q.filter(and_(File.client_id > 25, File.purpose == 'probe'))
 
-    if 'mc' in protocol:
+    if 'mc' in self.protocol:
       q_probe = q_probe.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
       list_probe = list(q_probe)
-    if 'ud' in protocol:
+    if 'ud' in self.protocol:
       q_probe = q_probe.filter(and_(File.light == 'dark', File.pose == 'frontal'))
       list_probe = list(q_probe)
-    if 'uo' in protocol:
+    if 'uo' in self.protocol:
       q_probe = q_probe.filter(and_(File.light == 'outdoor', File.pose == 'frontal'))
       list_probe = list(q_probe)
 
-    
     for i in list_probe:
       print(i)
-    print("number of probe images for protocol {} -> {}".format(protocol, len(list_probe)))
+    print("number of probe images for protocol {} -> {}".format(self.protocol, len(list_probe)))
+    
+    
+    final_list = []
+    if 'train' in groups:
+      final_list += list_train
+    
+    # development set: ids 26 to 50, enroll and probe
+    if 'dev' in groups:
+      q_dev_enroll = q_enroll.filter(File.client_id <= 50)
+      q_dev_probe = q_probe.filter(File.client_id <= 50)
+      if purpose is None:
+        list_dev = list(q_dev_enroll) + list(q_dev_probe)
+      if purpose == 'enroll'
+        list_dev = list(q_dev_enroll) 
+      if purpose == 'probe'
+        list_dev =  list(q_dev_probe)
+      final_list += list_dev
 
+    # evaluation set: ids 51 to 75, enroll and probe
+    if 'eval' in groups:
+      q_eval_enroll = q_enroll.filter(File.client_id > 50)
+      q_eval_probe = q_probe.filter(File.client_id > 50)
+      if purpose is None:
+        list_eval = list(q_eval_enroll) + list(q_eval_probe)
+      if purpose == 'enroll'
+        list_eval = list(q_eval_enroll) 
+      if purpose == 'probe'
+        list_eval =  list(q_eval_probe)
+      final_list += list_eval
+
+    return final_list
+  
