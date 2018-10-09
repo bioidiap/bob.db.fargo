@@ -179,9 +179,9 @@ def add_protocols(session):
     
     # heterogeneous case
     if modality is None:
-      if protocol_name == 'rgb2nir':
+      if 'rgb2nir' in protocol_name:
         target_modality = 'nir'
-      if protocol_name == 'rgb2depth':
+      if 'rgb2depth' in protocol_name:
         target_modality = 'depth'
     
     # add protocol purposes
