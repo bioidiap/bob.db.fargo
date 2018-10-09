@@ -138,6 +138,26 @@ def add_protocols(session):
   protocol_probes['uo-nir'] = ['nir', session_probe, device_probe, recordings_probe]
   protocol_probes['uo-depth'] = ['depth', session_probe, device_probe, recordings_probe]
 
+  ###############
+  ### POS-YAW ###
+  ###############
+  # unmatched pose -> probes are with varying yaw
+  session_probe = 'controlled'
+  recordings_probe = ['0', '1']
+
+  # add the modalities
+  protocol_probes['pos-yaw'] = ['rgb', session_probe, device_probe, recordings_probe]
+  
+  #################
+  ### POS-PITCH ###
+  #################
+  # unmatched pose -> probes are with varying pitch
+  session_probe = 'controlled'
+  recordings_probe = ['0', '1']
+
+  # add the modalities
+  protocol_probes['pos-pitch'] = ['rgb', session_probe, device_probe, recordings_probe]
+  
   
   # the purpose list 
   group_purpose_list = [('world', 'train'), ('dev', 'enroll'), ('dev', 'probe'), ('eval', 'enroll'), ('eval', 'probe')]
@@ -153,7 +173,6 @@ def add_protocols(session):
 
     modality = protocol_probes[protocol_name][0]
     
-
     # add protocol purposes
     for group_purpose in group_purpose_list:
      
