@@ -26,114 +26,161 @@ class Database(bob.db.base.SQLiteDatabase):
     self.annotation_extension = annotation_extension
     self.protocol = protocol
 
-  def objects(self, protocol=None, groups=None, purposes=None, model_ids=None):
-    """ Return a set of file
+  def groups(self, protocol=None):     
+    """Returns the names of all registered groups"""   
 
-    Parameters
-    ----------
-      protocol: py:obj:str
-        One of the protocols
-      groups: py:obj:str or py:obj:tuple of py:obj:str
-        One of the groups ('train', 'dev', 'eval') or several of them
-      purpose: py:obj:str or py:obj:tuple of py:obj:str
-        One of the groups ('train', 'enroll', 'probe') or several of them
+    return ProtocolPurpose.group_choices
 
-    Returns
-    -------
-      py:obj:list
-        A list of File
 
-    Raises
-    ------
+  def clients(self, protocol=None, groups=None):
+    """Returns a set of clients for the specific query by the user.
 
+    Keyword Parameters:
+
+    protocol
+      Ignored since the clients are identical for all protocols.
+
+    groups
+      The groups to which the clients belong ('world', 'dev', 'eval').
+
+    Returns: A list containing all the clients which have the given properties.
     """
-    # protocol = self.check_parameters_for_validity(protocol, "protocol", self.protocols())
-    # groups = self.check_parameters_for_validity(groups, "group", self.groups())
 
+    groups = self.check_parameters_for_validity(groups, "group", self.groups())
+
+    retval = []
+    # List of the clients
+    if "world" in groups:
+      q = self.query(Client).filter(Client.group == 'world')
+      retval += list(q)
+    if 'dev' in groups:
+      q = self.query(Client).filter(Client.group == 'dev')
+      retval += list(q)
+    if 'eval' in groups:
+      q = self.query(Client).filter(Client.group == 'eval')
+      retval += list(q)
+
+    return retval
+
+  def models(self, protocol=None, groups=None):
+    """Returns a set of models for the specific query by the user.
+
+    Keyword Parameters:
+
+    protocol
+      Ignored since the models are identical for all protocols.
+
+    groups
+      The groups to which the subjects attached to the models belong
+
+    Returns: A list containing all the models which have the given properties.
+    """
+    return self.clients(protocol, groups)
+
+  def model_ids(self, protocol=None, groups=None):
+    """Returns a set of models ids for the specific query by the user.
+
+    Keyword Parameters:
+
+    protocol
+      Ignored since the models are identical for all protocols.
+
+    groups
+      The groups to which the subjects attached to the models belong ('g1', 'g2', 'world')
+      Note that 'dev' is an alias to 'g1' and 'eval' an alias to 'g2'
+
+    Returns: A list containing all the models ids which have the given properties.
+    """
+    return [model.id for model in self.models(protocol, groups)]
+
+  def client(self, id):
+    """Returns the client object in the database given a certain id. Raises
+    an error if that does not exist."""
+
+    return self.query(Client).filter(Client.id == id).one()
+ 
+
+  def protocol_names(self):
+    """Returns all registered protocol names"""
+
+    l = self.protocols()
+    retval = [str(k.name) for k in l]
+    return retval
+
+  def protocols(self):
+    """Returns all registered protocols"""
+
+    return list(self.query(Protocol))
+ 
+  def purposes(self):
+    return ProtocolPurpose.purpose_choices
+
+  def objects(self, protocol=None, purposes=None, model_ids=None, groups=None):
+    """Returns a set of Files for the specific query by the user.
+
+    Keyword Parameters:
+
+    protocol
+      One of the FARGO protocols.
+
+    purposes
+      The purposes required to be retrieved ('enroll', 'probe', 'train') or a tuple
+      with several of them. If 'None' is given (this is the default), it is
+      considered the same as a tuple with all possible values. This field is
+      ignored for the data from the "world" group.
+
+    model_ids
+      Only retrieves the files for the provided list of model ids (claimed
+      client id).  If 'None' is given (this is the default), no filter over
+      the model_ids is performed.
+
+    groups
+      One of the groups ('dev', 'eval', 'world') or a tuple with several of them.
+      If 'None' is given (this is the default), it is considered the same as a
+      tuple with all possible values.
+
+    Returns: A list of files which have the given properties.
+    """
+
+    #print("Protocol = {}, purpose = {}, model_ids = {}, groups = {}".format(protocol, purposes, model_ids, groups))
     from sqlalchemy import and_
-    
-    # get all files
-    q = self.query(File)
 
-    # filter the modality, based on the protocol (hetereogeneous case will be addressed later)
-    if '-rgb' in self.protocol:
-      q = q.filter(File.modality == 'rgb')
-    if '-nir' in self.protocol:
-      q = q.filter(File.modality == 'nir')
-    if '-depth' in self.protocol:
-      q = q.filter(File.modality == 'depth')
-   
-    # filter the training set: regardless of the protocol, this is client 1 to 25, controlled and frontal
-    q_train = q.filter(and_(File.client_id <= 25, File.light == 'controlled', File.pose == 'frontal'))
+    protocol = self.check_parameters_for_validity(protocol, "protocol", self.protocol_names())
+    purposes = self.check_parameters_for_validity(purposes, "purpose", self.purposes())
+    groups = self.check_parameters_for_validity(groups, "group", self.groups())
 
-    list_train = list(q_train)
-    #for i in list_train:
-    #  print(i)
-    #print("number of training images for protocol {} -> {}".format(self.protocol, len(list_train)))
+    import collections
+    if(model_ids is None):
+      model_ids = ()
+    elif(not isinstance(model_ids, collections.Iterable)):
+      model_ids = (model_ids,)
 
-    # now get enrollment images for both dev and test
-    q_enroll = q.filter(and_(File.client_id > 25, File.purpose == 'enroll'))
-    list_enroll = list(q_enroll)
-    #for i in list_enroll:
-    #  print(i)
-    #print(len(list_enroll))
-    #print("number of enrollment images for protocol {} -> {}".format(self.protocol, len(list_enroll)))
+    # Now query the database
+    retval = []
+    if 'world' in groups:
+      q = self.query(File).join(Client).join((ProtocolPurpose, File.protocolPurposes)).join(Protocol)
+      q = q.filter(Client.group == 'world').filter(and_(Protocol.name.in_(protocol), ProtocolPurpose.group == 'world'))
+      if model_ids:
+        q = q.filter(Client.id.in_(model_ids))
+      q = q.order_by(File.client_id)
+      retval += list(q)
 
-    # now get the probes ...
-    q_probe = q.filter(and_(File.client_id > 25, File.purpose == 'probe'))
+    if ('dev' in groups or 'eval' in groups):
 
-    if 'mc' in self.protocol:
-      q_probe = q_probe.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
-      list_probe = list(q_probe)
-    if 'ud' in self.protocol:
-      q_probe = q_probe.filter(and_(File.light == 'dark', File.pose == 'frontal'))
-      list_probe = list(q_probe)
-    if 'uo' in self.protocol:
-      q_probe = q_probe.filter(and_(File.light == 'outdoor', File.pose == 'frontal'))
-      list_probe = list(q_probe)
+      if('enroll' in purposes):
+        q = self.query(File).join(Client).join((ProtocolPurpose, File.protocolPurposes)).join(Protocol).\
+              filter(and_(Protocol.name.in_(protocol), ProtocolPurpose.group.in_(groups), ProtocolPurpose.purpose == 'enroll'))
+        if model_ids:
+          q = q.filter(Client.id.in_(model_ids))
+        q = q.order_by(File.client_id)
+        retval += list(q)
 
-    #for i in list_probe:
-    #  print(i)
-    #print("number of probe images for protocol {} -> {}".format(self.protocol, len(list_probe)))
-    
-    
-    final_list = []
-    if 'train' in groups:
-      final_list += list_train
-    
-    # development set: ids 26 to 50, enroll and probe
-    if 'dev' in groups:
-      q_dev_enroll = q_enroll.filter(File.client_id <= 50)
-      q_dev_probe = q_probe.filter(File.client_id <= 50)
-      list_dev = list(q_dev_enroll) + list(q_dev_probe)
-      if purposes is not None and 'enroll' in purposes:
-        list_dev = list(q_dev_enroll) 
-      if purposes is not None and 'probe' in purposes:
-        list_dev = list(q_dev_probe)
-      final_list += list_dev
+      # dense probing -> don't filter by model_ids
+      if('probe' in purposes):
+        q = self.query(File).join(Client).join((ProtocolPurpose, File.protocolPurposes)).join(Protocol).\
+              filter(and_(Protocol.name.in_(protocol), ProtocolPurpose.group.in_(groups), ProtocolPurpose.purpose == 'probe'))
+        q = q.order_by(File.client_id)
+        retval += list(q)
 
-    # evaluation set: ids 51 to 75, enroll and probe
-    if 'eval' in groups:
-      q_eval_enroll = q_enroll.filter(File.client_id > 50)
-      q_eval_probe = q_probe.filter(File.client_id > 50)
-      list_eval = list(q_eval_enroll) + list(q_eval_probe)
-      if purposes is not None and 'enroll' in purposes:
-        list_eval = list(q_eval_enroll) 
-      if purposes is not None and 'probe' in purposes:
-        list_eval =  list(q_eval_probe)
-      final_list += list_eval
+    return list(set(retval))  # To remove duplicates
 
-    return final_list
-
-
-  def model_ids(self, groups=None, protocol=None, **kwargs): 
-    
-    ids = []
-    if 'train' in groups:
-      ids += list(range(26))
-    if 'dev' in groups:
-      ids += list(range(26, 51))
-    if 'eval' in groups:
-      ids += list(range(51, 76))
-
-    return ids
