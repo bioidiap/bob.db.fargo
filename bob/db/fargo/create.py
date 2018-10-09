@@ -113,6 +113,9 @@ def add_protocols(session):
   protocol_probes['mc-rgb'] = ['rgb', session_probe, device_probe, recordings_probe]
   protocol_probes['mc-nir'] = ['nir', session_probe, device_probe, recordings_probe]
   protocol_probes['mc-depth'] = ['depth', session_probe, device_probe, recordings_probe]
+  # heterogeneous
+  protocol_probes['mc-rgb2nir'] = [None , session_probe, device_probe, recordings_probe]
+  protocol_probes['mc-rgb2depth'] = [None, session_probe, device_probe, recordings_probe]
 
   ##########
   ### UD ###
@@ -125,6 +128,9 @@ def add_protocols(session):
   protocol_probes['ud-rgb'] = ['rgb', session_probe, device_probe, recordings_probe]
   protocol_probes['ud-nir'] = ['nir', session_probe, device_probe, recordings_probe]
   protocol_probes['ud-depth'] = ['depth', session_probe, device_probe, recordings_probe]
+  # heterogeneous
+  protocol_probes['ud-rgb2nir'] = [None , session_probe, device_probe, recordings_probe]
+  protocol_probes['ud-rgb2depth'] = [None, session_probe, device_probe, recordings_probe]
 
   ##########
   ### UO ###
@@ -137,6 +143,9 @@ def add_protocols(session):
   protocol_probes['uo-rgb'] = ['rgb', session_probe, device_probe, recordings_probe]
   protocol_probes['uo-nir'] = ['nir', session_probe, device_probe, recordings_probe]
   protocol_probes['uo-depth'] = ['depth', session_probe, device_probe, recordings_probe]
+  # heterogeneous
+  protocol_probes['uo-rgb2nir'] = [None , session_probe, device_probe, recordings_probe]
+  protocol_probes['uo-rgb2depth'] = [None, session_probe, device_probe, recordings_probe]
 
   ###############
   ### POS-YAW ###
@@ -144,8 +153,6 @@ def add_protocols(session):
   # unmatched pose -> probes are with varying yaw
   session_probe = 'controlled'
   recordings_probe = ['0', '1']
-
-  # add the modalities
   protocol_probes['pos-yaw'] = ['rgb', session_probe, device_probe, recordings_probe]
   
   #################
@@ -154,11 +161,8 @@ def add_protocols(session):
   # unmatched pose -> probes are with varying pitch
   session_probe = 'controlled'
   recordings_probe = ['0', '1']
-
-  # add the modalities
   protocol_probes['pos-pitch'] = ['rgb', session_probe, device_probe, recordings_probe]
  
-  
   # the purpose list 
   group_purpose_list = [('world', 'train'), ('dev', 'enroll'), ('dev', 'probe'), ('eval', 'enroll'), ('eval', 'probe')]
   
@@ -172,6 +176,13 @@ def add_protocols(session):
     session.refresh(p)
 
     modality = protocol_probes[protocol_name][0]
+    
+    # heterogeneous case
+    if modality is None:
+      if protocol_name == 'rgb2nir':
+        target_modality = 'nir'
+      if protocol_name == 'rgb2depth':
+        target_modality = 'depth'
     
     # add protocol purposes
     for group_purpose in group_purpose_list:
@@ -188,16 +199,26 @@ def add_protocols(session):
       # add files attached with this protocol purpose - by querying Files
       
       # first retrieve all files for the group 
-      q = session.query(File).join(Client).filter(and_(Client.group == group, File.modality == modality)).order_by(File.id)
+      q = session.query(File).join(Client).filter(Client.group == group).order_by(File.id)
 
-      # if purpose is train or enroll, we have controlled frontal images in any cases
-      if purpose == 'train' or purpose == 'enroll':
+      # if purpose is train, we have controlled frontal images in any cases
+      if purpose == 'train':
         q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
+        # now get the right modality
+        if modality is not None:
+          q = q.filter(File.modality == modality)
+        else:
+          q = q.filter(File.modality == target_modality)
 
-      # for enroll, the first recording, for each device is used
+      # for enroll, we have controlled frontal images, for the first recording for each device
       if purpose == 'enroll':
-         q = q.filter(File.recording.in_(recordings_enroll))
-      
+        q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal', File.recording.in_(recordings_enroll)))
+        # now filter modality:
+        if modality is not None:
+          q = q.filter(File.modality == modality)
+        else:
+          q = q.filter(File.modality == 'rgb') # always rgb in heterogeneous case
+
       # now the probes 
       if purpose == 'probe':
         # for probes, the number of recording depends on the protocol
@@ -211,6 +232,11 @@ def add_protocols(session):
           q = q.filter(File.pose == 'pitch')
         else:
           q = q.filter(File.pose == 'frontal')
+        # the modality
+        if modality is not None:
+          q = q.filter(File.modality == modality)
+        else:
+          q = q.filter(File.modality == target_modality) # target modality in heterogeneous case
 
       # now add the files
       for k in q:
@@ -219,99 +245,14 @@ def add_protocols(session):
 
  
 
-  # =====================================================================================================
+  #modality_train = 'nir'
+  #modality_enroll = 'rgb'
+  #modality_probe = 'nir'
 
-
-  # add protocols for heterogeneous face verification
-  protocol_heterogeneous = {}
-
-  ###############
-  ### RGB-NIR ###
-  ###############
-  modality_train = 'nir'
-  modality_enroll = 'rgb'
-  modality_probe = 'nir'
-  protocol_heterogeneous['rgb2nir-mc'] = [modality_train, modality_enroll, modality_probe]
-  protocol_heterogeneous['rgb2nir-ud'] = [modality_train, modality_enroll, modality_probe]
-  protocol_heterogeneous['rgb2nir-uo'] = [modality_train, modality_enroll, modality_probe]
-
-  
-  #################
-  ### RGB-DEPTH ###
-  #################
-  modality_train = 'depth'
-  modality_enroll = 'rgb'
-  modality_probe = 'depth'
-  protocol_heterogeneous['rgb2depth-mc'] = [modality_train, modality_enroll, modality_probe]
-  protocol_heterogeneous['rgb2depth-ud'] = [modality_train, modality_enroll, modality_probe]
-  protocol_heterogeneous['rgb2depth-uo'] = [modality_train, modality_enroll, modality_probe]
-
-  for protocol_name in protocol_heterogeneous:
-  
-    p = Protocol(protocol_name)
-    logger.info("Adding protocol {}...".format(protocol_name))
-    session.add(p)
-    session.flush()
-    session.refresh(p)
-
-    train_mod = protocol_heterogeneous[protocol_name][0]
-    enroll_mod = protocol_heterogeneous[protocol_name][1]
-    probe_mod = protocol_heterogeneous[protocol_name][2]
-
-    # get session and recordings for probes, based on what's defined above (that's ugly ...)
-    if 'mc' in protocol_name:
-      session_probe = 'controlled'
-      recordings_probe = ['1']
-    if 'ud' in protocol_name:
-      session_probe = 'dark'
-      recordings_probe = ['0', '1']
-    if 'uo' in protocol_name:
-      session_probe = 'outdoor'
-      recordings_probe = ['0', '1']
-
-     # add protocol purposes
-    for group_purpose in group_purpose_list:
-     
-      group = group_purpose[0]
-      purpose = group_purpose[1]
-      pu = ProtocolPurpose(p.id, group, purpose)
-      
-      logger.info("  Adding protocol purpose ({}, {})...".format(group, purpose))
-      session.add(pu)
-      session.flush()
-      session.refresh(pu)
-
-      # add files attached with this protocol purpose - by querying Files
-      
-      # first retrieve all files for the group 
-      q = session.query(File).join(Client).filter(Client.group == group).order_by(File.id)
-
-      # if purpose is train or enroll, we have controlled frontal images in any cases
-      if purpose == 'train' or purpose == 'enroll':
-        q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
-
-      # for enroll, the first recording, for each device is used, with the original modality (i.e. rgb)
-      if purpose == 'enroll':
-         q = q.filter(and_(File.recording.in_(recordings_enroll), File.modality == enroll_mod)
-      
-      # now the probes (only frontal will be addressed here) 
-      if purpose == 'probe':
-        # for probes, the number of recording depends on the protocol
-        q = q.filter(File.recording.in_(protocol_probes[protocol_name][3]))
-        # the light condition as well
-        q = q.filter(File.light == protocol_probes[protocol_name][1])
-        # the pose
-        q = q.filter(File.pose == 'frontal')
-        # the modality
-        q = q.filter(File.modality == ')
-
-      # now add the files
-      for k in q:
-        pu.files.append(k)
-      logger.info("added {} files".format(len(list(q))))
-
-
-
+  #
+  #modality_train = 'depth'
+  #modality_enroll = 'rgb'
+  #modality_probe = 'depth'
 
 
 def create_tables(args):
