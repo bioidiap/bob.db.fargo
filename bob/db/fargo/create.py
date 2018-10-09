@@ -157,7 +157,7 @@ def add_protocols(session):
 
   # add the modalities
   protocol_probes['pos-pitch'] = ['rgb', session_probe, device_probe, recordings_probe]
-  
+ 
   
   # the purpose list 
   group_purpose_list = [('world', 'train'), ('dev', 'enroll'), ('dev', 'probe'), ('eval', 'enroll'), ('eval', 'probe')]
@@ -216,6 +216,102 @@ def add_protocols(session):
       for k in q:
         pu.files.append(k)
       logger.info("added {} files".format(len(list(q))))
+
+ 
+
+  # =====================================================================================================
+
+
+  # add protocols for heterogeneous face verification
+  protocol_heterogeneous = {}
+
+  ###############
+  ### RGB-NIR ###
+  ###############
+  modality_train = 'nir'
+  modality_enroll = 'rgb'
+  modality_probe = 'nir'
+  protocol_heterogeneous['rgb2nir-mc'] = [modality_train, modality_enroll, modality_probe]
+  protocol_heterogeneous['rgb2nir-ud'] = [modality_train, modality_enroll, modality_probe]
+  protocol_heterogeneous['rgb2nir-uo'] = [modality_train, modality_enroll, modality_probe]
+
+  
+  #################
+  ### RGB-DEPTH ###
+  #################
+  modality_train = 'depth'
+  modality_enroll = 'rgb'
+  modality_probe = 'depth'
+  protocol_heterogeneous['rgb2depth-mc'] = [modality_train, modality_enroll, modality_probe]
+  protocol_heterogeneous['rgb2depth-ud'] = [modality_train, modality_enroll, modality_probe]
+  protocol_heterogeneous['rgb2depth-uo'] = [modality_train, modality_enroll, modality_probe]
+
+  for protocol_name in protocol_heterogeneous:
+  
+    p = Protocol(protocol_name)
+    logger.info("Adding protocol {}...".format(protocol_name))
+    session.add(p)
+    session.flush()
+    session.refresh(p)
+
+    train_mod = protocol_heterogeneous[protocol_name][0]
+    enroll_mod = protocol_heterogeneous[protocol_name][1]
+    probe_mod = protocol_heterogeneous[protocol_name][2]
+
+    # get session and recordings for probes, based on what's defined above (that's ugly ...)
+    if 'mc' in protocol_name:
+      session_probe = 'controlled'
+      recordings_probe = ['1']
+    if 'ud' in protocol_name:
+      session_probe = 'dark'
+      recordings_probe = ['0', '1']
+    if 'uo' in protocol_name:
+      session_probe = 'outdoor'
+      recordings_probe = ['0', '1']
+
+     # add protocol purposes
+    for group_purpose in group_purpose_list:
+     
+      group = group_purpose[0]
+      purpose = group_purpose[1]
+      pu = ProtocolPurpose(p.id, group, purpose)
+      
+      logger.info("  Adding protocol purpose ({}, {})...".format(group, purpose))
+      session.add(pu)
+      session.flush()
+      session.refresh(pu)
+
+      # add files attached with this protocol purpose - by querying Files
+      
+      # first retrieve all files for the group 
+      q = session.query(File).join(Client).filter(Client.group == group).order_by(File.id)
+
+      # if purpose is train or enroll, we have controlled frontal images in any cases
+      if purpose == 'train' or purpose == 'enroll':
+        q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
+
+      # for enroll, the first recording, for each device is used, with the original modality (i.e. rgb)
+      if purpose == 'enroll':
+         q = q.filter(and_(File.recording.in_(recordings_enroll), File.modality == enroll_mod)
+      
+      # now the probes (only frontal will be addressed here) 
+      if purpose == 'probe':
+        # for probes, the number of recording depends on the protocol
+        q = q.filter(File.recording.in_(protocol_probes[protocol_name][3]))
+        # the light condition as well
+        q = q.filter(File.light == protocol_probes[protocol_name][1])
+        # the pose
+        q = q.filter(File.pose == 'frontal')
+        # the modality
+        q = q.filter(File.modality == ')
+
+      # now add the files
+      for k in q:
+        pu.files.append(k)
+      logger.info("added {} files".format(len(list(q))))
+
+
+
 
 
 def create_tables(args):
