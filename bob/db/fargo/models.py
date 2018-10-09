@@ -9,42 +9,52 @@ from sqlalchemy.orm import backref
 from sqlalchemy.ext.declarative import declarative_base
 
 import bob.db.base
-import numpy
-import bob.io.base
-import bob.io.image
 
 import bob.core
 
 logger = bob.core.log.setup('bob.db.fargo')
 Base = declarative_base()
 
+# association table between File and ProtocolPurpose
+protocolPurpose_file_association = Table('protocolPurpose_file_association', Base.metadata,
+  Column('protocolPurpose_id', Integer, ForeignKey('protocolPurpose.id')),
+  Column('file_id',  Integer, ForeignKey('file.id')))
+
+
 class Client(Base):
   """Database clients, marked by an integer identifier and the set they belong
   to"""
 
   __tablename__ = 'client'
-
-  set_choices = ('train', 'dev', 'eval')
-  """Possible groups to which clients may belong to"""
-
+  
   id = Column(Integer, primary_key=True)
-  """Key identifier for clients"""
+  
+  # Possible groups to which clients may belong to
+  group_choices = ('world', 'dev', 'eval')
 
-  set = Column(Enum(*set_choices))
-  """Set to which this client belongs to"""
+  # Group to which this client belongs to"""
+  group = Column(Enum(*group_choices))
 
-  def __init__(self, id, set):
+  def __init__(self, id, group):
     self.id = id
-    self.set = set
+    self.group = group
 
   def __repr__(self):
-    return "Client('%s', '%s')" % (self.id, self.set)
+    return "Client('%s', '%s')" % (self.id, self.group)
 
 
 class File(Base, bob.db.base.File):
   """Generic file container"""
 
   __tablename__ = 'file'
+
+  # key id for files
+  id = Column(Integer, primary_key=True)
+
+  # client id of this file
+  client_id = Column(Integer, ForeignKey('client.id'))  
+  # A direct link to the client object that this file belongs to
+  client = relationship(Client, backref=backref('files', order_by=id))
 
   # illumination conditions
   light_choices = ('controlled', 'dark', 'outdoor')
@@ -53,47 +63,30 @@ class File(Base, bob.db.base.File):
   # mounted devices
   device_choices = ('laptop', 'mobile')
   device = Column(Enum(*device_choices))
-
-  # pose
-  pose_choices = ('frontal', 'yaw', 'pitch')
-  pose = Column(Enum(*pose_choices))
+  
+  # recordings
+  recording_choices = ('0', '1')
+  recording = Column(Enum(*recording_choices))
 
   # modality
   modality_choices = ('rgb', 'nir', 'depth')
   modality = Column(Enum(*modality_choices))
 
-  # recordings
-  recording_choices = ('0', '1')
-  recording = Column(Enum(*recording_choices))
-
-  # key id for files
-  id = Column(Integer, primary_key=True)
-  """Key identifier for files"""
-
-  # client id of this file
-  client_id = Column(Integer, ForeignKey('client.id'))  # for SQL
-
-  # for Python
-  client = relationship(Client, backref=backref('files', order_by=id))
-  """A direct link to the client object that this file belongs to"""
+  # pose
+  pose_choices = ('frontal', 'yaw', 'pitch')
+  pose = Column(Enum(*pose_choices))
 
   # path of this file in the database
   path = Column(String(100), unique=True)
 
-  # purpose
-  purpose_choices = ('train', 'enroll', 'probe')
-  purpose = Column(Enum(*purpose_choices))
-
-  def __init__(self, id_file, client_id, path, light, device, pose, modality, recording, purpose):
+  def __init__(self, client_id, path, light, device, pose, modality, recording):
     bob.db.base.File.__init__(self, path=path)
-    self.id = id_file
     self.client_id = client_id
     self.light = light
     self.device = device
-    self.pose = pose
-    self.modality = modality
     self.recording = recording
-    self.purpose = purpose
+    self.modality = modality
+    self.pose = pose
 
   def __repr__(self):
     return "File('%s')" % self.path
@@ -119,3 +112,49 @@ class File(Base, bob.db.base.File):
       extension = ''
 
     return str(os.path.join(directory, self.path + extension))
+
+class Protocol(Base):
+  """FARGO protocols
+  
+  """
+
+  __tablename__ = 'protocol'
+
+  id = Column(Integer, primary_key=True)
+  name = Column(String(20), unique=True)
+
+  def __init__(self, name):
+    self.name = name
+
+  def __repr__(self):
+    return "Protocol('%s')" % (self.name,)
+
+
+class ProtocolPurpose(Base):
+  """FARGO protocol purposes"""
+
+  __tablename__ = 'protocolPurpose'
+
+  id = Column(Integer, primary_key=True)
+  
+  protocol_id = Column(Integer, ForeignKey('protocol.id'))
+  group_choices = ('world', 'dev', 'eval')
+  group = Column(Enum(*group_choices))
+  purpose_choices = ('train', 'enroll', 'probe')
+  purpose = Column(Enum(*purpose_choices))
+
+  # protocol: a protocol have 1 to many purpose
+  protocol = relationship("Protocol", backref=backref("purposes", order_by=id))
+  
+  # files: many to many relationship
+  files = relationship("File", secondary=protocolPurpose_file_association, backref=backref("protocolPurposes", order_by=id))
+
+  def __init__(self, protocol_id, group, purpose):
+    self.protocol_id = protocol_id
+    self.group = group
+    self.purpose = purpose
+
+  def __repr__(self):
+    return "ProtocolPurpose('%s', '%s', '%s')" % (self.protocol.name, self.group, self.purpose)
+
+
