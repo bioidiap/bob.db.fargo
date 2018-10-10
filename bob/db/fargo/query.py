@@ -54,6 +54,10 @@ class Database(bob.db.base.SQLiteDatabase):
     self.annotation_extension = annotation_extension
     self.protocol = protocol
 
+  @property
+  def modalities(self):
+    return ['rgb', 'nir', 'depth']
+
   def groups(self, protocol=None):     
     """Returns the names of all registered groups
     
@@ -173,7 +177,7 @@ class Database(bob.db.base.SQLiteDatabase):
     return ProtocolPurpose.purpose_choices
 
 
-  def objects(self, protocol=None, purposes=None, model_ids=None, groups=None):
+  def objects(self, protocol=None, purposes=None, model_ids=None, groups=None, modality=None):
     """Returns a set of Files for the specific query by the user.
 
     Parameters
@@ -192,6 +196,8 @@ class Database(bob.db.base.SQLiteDatabase):
       One of the groups ('dev', 'eval', 'world') or a tuple with several of them.
       If 'None' is given (this is the default), it is considered the same as a
       tuple with all possible values.
+    modality: str or tuple
+      One of the three modalities 'rgb', 'nir' and 'depth'
 
     Returns
     -------
@@ -200,10 +206,10 @@ class Database(bob.db.base.SQLiteDatabase):
     
     """
     from sqlalchemy import and_
-
     protocol = self.check_parameters_for_validity(protocol, "protocol", self.protocol_names())
     purposes = self.check_parameters_for_validity(purposes, "purpose", self.purposes())
     groups = self.check_parameters_for_validity(groups, "group", self.groups())
+    modality = self.check_parameters_for_validity(modality, "modality", self.modalities)
 
     import collections
     if(model_ids is None):
@@ -219,6 +225,8 @@ class Database(bob.db.base.SQLiteDatabase):
       if model_ids:
         q = q.filter(Client.id.in_(model_ids))
       q = q.order_by(File.client_id)
+      q = q.filter(File.modality.in_(modality))
+
       retval += list(q)
 
     if ('dev' in groups or 'eval' in groups):
