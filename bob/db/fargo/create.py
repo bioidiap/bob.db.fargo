@@ -229,11 +229,19 @@ def add_protocols(session):
       if purpose == 'train':
         q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal'))
         # now get the right modality
-        if modality is not None:
-          q = q.filter(File.modality == modality)
-        else:
-          q = q.filter(File.modality == target_modality)
 
+        # if HETEROGENEOUS get 2 modalities for the WORLD set
+        if "rgb2nir" in p.name or "rgb2depth" in p.name:
+          if modality is not None:
+            q = q.filter(File.modality.in_([modality,"rgb"]))
+          else:
+            q = q.filter(File.modality.in_(["rgb", target_modality]))
+        else:
+          if modality is not None:
+            q = q.filter(File.modality.in_([modality]))
+          else:
+            q = q.filter(File.modality.in_([target_modality]))
+ 
       # for enroll, we have controlled frontal images, for the first recording for each device
       if purpose == 'enroll':
         q = q.filter(and_(File.light == 'controlled', File.pose == 'frontal', File.recording.in_(recordings_enroll)))

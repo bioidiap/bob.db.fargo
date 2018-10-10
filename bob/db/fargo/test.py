@@ -7,6 +7,7 @@
 """A few checks on the protocols of the FARGO public database 
 """
 import os, sys
+import bob.db.base
 import bob.db.fargo
 
 def db_available(test):
@@ -90,8 +91,9 @@ def test_heterogeneous():
     probe_modalities = ["nir", "depth"]
 
     for p, m in zip(protocols, probe_modalities):
-        assert len(db.objects(protocol=p)) == 3000
-        assert len(db.objects(protocol=p, groups="world")) == 1000
+        assert len(db.objects(protocol=p)) == 4000       
+        assert len(db.objects(protocol=p, groups="world")) == 2000
+        assert len(db.objects(protocol=p, groups="world", modality=m)) == 1000
 
         for g in groups:
             assert len(db.objects(protocol=p, groups="dev")) == 1000
@@ -113,10 +115,11 @@ def test_heterogeneous():
                  "uo-rgb2nir", "uo-rgb2depth"]
     probe_modalities = ["nir", "depth",
                         "nir", "depth"]
-    
+  
     for p, m in zip(protocols, probe_modalities):
-        assert len(db.objects(protocol=p)) == 4000
-        assert len(db.objects(protocol=p, groups="world")) == 1000
+        assert len(db.objects(protocol=p)) == 5000
+        assert len(db.objects(protocol=p, groups="world")) == 2000
+        assert len(db.objects(protocol=p, groups="world", modality=m)) == 1000
 
         for g in groups:
             assert len(db.objects(protocol=p, groups="dev")) == 1500
