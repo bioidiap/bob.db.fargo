@@ -73,3 +73,61 @@ def test_objects():
   assert len(db.objects(protocol='uo-depth', groups='eval', purposes='enroll', model_ids=51)) == 20
   assert len(db.objects(protocol='uo-depth', groups='eval', purposes='probe')) == 1000
   assert len(db.objects(protocol='uo-depth', groups='eval', purposes='probe', model_ids=51)) == 1000 # dense probing
+
+
+@db_available
+def test_heterogeneous():    
+    # Test heterogeous protocols    
+
+    db = bob.db.fargo.Database()
+
+    groups = ["dev", "eval"]
+
+    ##############
+    # Testing controlled
+    ##############
+    protocols = ["mc-rgb2nir", "mc-rgb2depth"]
+    probe_modalities = ["nir", "depth"]
+
+    for p, m in zip(protocols, probe_modalities):
+        assert len(db.objects(protocol=p)) == 3000
+        assert len(db.objects(protocol=p, groups="world")) == 1000
+
+        for g in groups:
+            assert len(db.objects(protocol=p, groups="dev")) == 1000
+            assert len(db.objects(protocol=p, groups="eval")) == 1000
+
+            # Checking the modalities
+            modality = set([o.modality for o in db.objects(protocol=p, groups=g, purposes="enroll")])
+            assert len(modality) == 1
+            assert list(modality)[0] == "rgb"
+
+            modality = set([o.modality for o in db.objects(protocol=p, groups=g, purposes="probe")])
+            assert len(modality) == 1
+            assert list(modality)[0] == m
+            
+    #############
+    # Testing UNcontrolled
+    #############
+    protocols = ["ud-rgb2nir", "ud-rgb2depth",
+                 "uo-rgb2nir", "uo-rgb2depth"]
+    probe_modalities = ["nir", "depth",
+                        "nir", "depth"]
+    
+    for p, m in zip(protocols, probe_modalities):
+        assert len(db.objects(protocol=p)) == 4000
+        assert len(db.objects(protocol=p, groups="world")) == 1000
+
+        for g in groups:
+            assert len(db.objects(protocol=p, groups="dev")) == 1500
+            assert len(db.objects(protocol=p, groups="eval")) == 1500
+
+            # Checking the modalities
+            modality = set([o.modality for o in db.objects(protocol=p, groups=g, purposes="enroll")])
+            assert len(modality) == 1
+            assert list(modality)[0] == "rgb"
+
+            modality = set([o.modality for o in db.objects(protocol=p, groups=g, purposes="probe")])
+            assert len(modality) == 1
+            assert list(modality)[0] == m
+ 
