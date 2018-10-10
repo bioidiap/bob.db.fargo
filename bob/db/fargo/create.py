@@ -14,10 +14,12 @@ logger = bob.core.log.setup('bob.db.fargo')
 def add_clients(session, imagesdir):
   """Add clients
 
-  This function add clients to the database. 
+  This function adds clients to the database. 
 
   Parameters
   ----------
+  session:
+    The session to the SQLite database 
   imagesdir : :py:obj:str
     The directory where the images have been extracted
   verbose : bool
@@ -36,7 +38,18 @@ def add_clients(session, imagesdir):
     session.add(Client(client_id, group))
 
 def add_files(session, imagesdir, extension='.png'):
-  """ Add face images files
+  """ Add face images files.
+
+  This function adds the face image files to the database.
+
+  Parameters
+  ----------
+  session:
+    The session to the SQLite database 
+  imagesdir : :py:obj:str
+    The directory where the images have been extracted
+  extension: :py:obj:str
+    The extension of the image file.
 
   """
 
@@ -69,7 +82,7 @@ def add_files(session, imagesdir, extension='.png'):
         
         stem = image_info[0:-len(extension)]
 
-        logger.info("Adding file {}: ID={}, light={}, device={}, pose={}, mod={}, rec={}".format(stem, client_id, light, device, pose, modality, recording))
+        logger.info("Adding file {}".format(stem))
         o = File(client_id=client_id, path=stem, light=light, device=device, pose=pose, modality=modality, recording=recording)
         session.add(o)
 
@@ -77,23 +90,36 @@ def add_files(session, imagesdir, extension='.png'):
 def add_protocols(session):
   """ Adds the different protocols of the FARGO database
 
+  This function creates and adds protocols and protocol purposes for this database
+
+  There are various protocols availables, addressing several tasks:
+  
+   - Frontal Face Verification using different modalities (RGB, NIR and depth)
+     * MC (matched controlled): training, enrollment and probes are acquired in controlled conditions.
+     * UD (unmatched degraded): training, enrollment are acquired in controlled conditions, probes with very low-light illumination
+     * UO (unmatched outdoor): training, enrollment are acquired in controlled conditions, probes are acquired outdoor.
+     These protocols are named in the following way: {mc, ud, uo}-{rgb,nir,depth}
+
+
+   - Pose-varying Face Verification:
+     * 'pos-yaw': training, enrollment are acquired in (frontal) controlled conditions, probes with varying yaw
+     * 'pos-pitch': training, enrollment are acquired in (frontal) controlled conditions, probes with varying pitch
+      
+     
+   - Heterogeneous Face Verification:
+     The same 3 protocols (MC, UD, UO) have been investigated in mismatched modalities too. Basically, starting
+     from a model trained using RGB, it is then adapted with the training set of the target modality. Enrollment
+     image are RGB, and probes are coming from the target modality (i.e. either NIR or depth).
+     These protocols are named in the following way: {mc, ud, uo}-rgb2{nir, depth}
+
+  Parameters
+  ----------
+  session:
+    The session to the SQLite database 
   """
   from sqlalchemy import and_
 
-  # client ids for each group
-  ids = {}
-  ids['world'] = list(range(26))
-  ids['dev'] = list(range(26, 51))
-  ids['eval'] = list(range(51, 76))
-
-  # the training set (or "world" set) is the same for all protocols
-  session_train = 'controlled'
-  device_train = ['laptop', 'mobile']
-  recordings_train = ['0', '1']
-
   # enrollment images are also the same for all protocols
-  session_enroll = 'controlled'
-  device_enroll = ['laptop', 'mobile']
   recordings_enroll = ['0']
  
   # now probes may change depending on the protocol
@@ -196,8 +222,6 @@ def add_protocols(session):
       session.flush()
       session.refresh(pu)
 
-      # add files attached with this protocol purpose - by querying Files
-      
       # first retrieve all files for the group 
       q = session.query(File).join(Client).filter(Client.group == group).order_by(File.id)
 
@@ -242,17 +266,6 @@ def add_protocols(session):
       for k in q:
         pu.files.append(k)
       logger.info("added {} files".format(len(list(q))))
-
- 
-
-  #modality_train = 'nir'
-  #modality_enroll = 'rgb'
-  #modality_probe = 'nir'
-
-  #
-  #modality_train = 'depth'
-  #modality_enroll = 'rgb'
-  #modality_probe = 'depth'
 
 
 def create_tables(args):
@@ -306,9 +319,7 @@ def add_command(subparsers):
                       help="If set, I'll first erase the current database")
   parser.add_argument('-v', '--verbose', action='count', default=0,
                       help="Do SQL operations in a verbose way")
-  parser.add_argument('-i', '--imagesdir', action='store',
-                      default='/idiap/temp/heusch/bob.project.fargo/images/',
-                      metavar='DIR',
-                      help="Change the path to the extracted images of the FARGO database (defaults to %(default)s)")
+  parser.add_argument('imagesdir', action='store', metavar='DIR',
+                      help="The path to the extracted images of the FARGO database")
 
   parser.set_defaults(func=create)  # action
