@@ -18,6 +18,7 @@ def dumplist(args):
   db = Database()
 
   r = db.objects(
+      protocol=args.protocol,
       purposes=args.purpose,
       groups=args.group,
   )
@@ -71,26 +72,32 @@ class Interface(BaseInterface):
     return pkg_resources.require('bob.db.%s' % self.name())[0].version
 
   def files(self):
-    return ()
+    from pkg_resources import resource_filename
+    raw_files = ('db.sql3',)
+    return [resource_filename(__name__, k) for k in raw_files]
 
   def type(self):
-    return 'text'
+    return 'sqlite'
 
   def add_commands(self, parser):
 
     from . import __doc__ as docs
 
-    subparsers = self.setup_parser(parser,
-        "FARGO database", docs)
+    subparsers = self.setup_parser(parser, "FARGO database", docs)
 
     import argparse
+    
+    # example: get the "create" action from a submodule
+    from .create import add_command as create_command
+    create_command(subparsers)
 
     # the "dumplist" action
     parser = subparsers.add_parser('dumplist', help=dumplist.__doc__)
     parser.add_argument('-d', '--directory', default='', help="if given, this path will be prepended to every entry returned.")
     parser.add_argument('-e', '--extension', default='', help="if given, this extension will be appended to every entry returned.")
-    parser.add_argument('-u', '--purpose', help="if given, this value will limit the output files to those designed for the given purposes.", choices=('enroll', 'probe', ''))
-    parser.add_argument('-g', '--group', help="if given, this value will limit the output files to those belonging to a particular protocolar group.", choices=('dev', 'eval', 'world', 'optional_world_1', 'optional_world_2', ''))
+    parser.add_argument('-p', '--protocol', help="the protocol", choices=('mc-rgb', 'ud-rgb', 'uo-rgb', 'mc-nir', 'ud-nir', 'uo-nir', 'mc-depth', 'ud-depth', 'uo-depth', 'pos-yaw', 'pos-pitch'))
+    parser.add_argument('-P', '--purpose', help="if given, this value will limit the output files to those designed for the given purposes.", choices=('enroll', 'probe', 'train'))
+    parser.add_argument('-g', '--group', help="if given, this value will limit the output files to those belonging to a particular protocolar group.", choices=('dev', 'eval', 'world'))
     parser.add_argument('--self-test', dest="selftest", action='store_true', help=argparse.SUPPRESS)
     parser.set_defaults(func=dumplist) #action
 
