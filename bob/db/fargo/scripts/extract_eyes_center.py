@@ -146,15 +146,6 @@ def get_eyes_center(landmarks):
   reye_y = int(0.5 * (landmarks['1'][0] + landmarks['2'][0]))
   leye_x = int(0.5 * (landmarks['3'][1] + landmarks['4'][1]))
   leye_y = int(0.5 * (landmarks['3'][0] + landmarks['4'][0]))
-  
- # print "============================"
- # print "right eye right corner (y,x) = {0}".format(landmarks['1'])
- # print "right eye left corner (y,x) = {0}".format(landmarks['2'])
- # print "right eye center (y,x) = {0}".format((reye_y, reye_x))
- # print "----------------------------"
- # print "left eye right corner (y,x) = {0}".format(landmarks['4'])
- # print "left eye right corner (y,x) = {0}".format(landmarks['3'])
- # print "left eye center (y,x) = {0}".format((leye_y, leye_x))
   return (reye_x, reye_y, leye_x, leye_y)
 
 
@@ -516,7 +507,7 @@ def annotate(image_file, eyes, annotation_dir):
   f.close()
 
   os.system('./bin/annotate.py ' + image_file + ' 00.pos --output temp.txt')
-  raw_input("Press Enter to terminate.")
+  input("Press Enter to terminate.")
 
   # read eyes center from temp annotation file
   f1 = open('temp.txt', 'r')
@@ -567,7 +558,10 @@ def main(user_input=None):
     os.mkdir(args['--eyesdir'])
 
   logfile = open(args['--log'], 'w')
-  
+ 
+  # python 2 / 3 compatibility
+  from builtins import input
+
   # to compute various stats
   total_counter = 0
   inexisting_counter = 0
@@ -662,7 +656,7 @@ def main(user_input=None):
             pyplot.show()
 
             # ask for re-annotation (i.e. reprojection is not good)
-            reannotate = raw_input("Want to re-annotate color ? [y/n]: ")
+            reannotate = input("Want to re-annotate color ? [y/n]: ")
             if reannotate == 'y':
 
               # get eyes position in the color frame
@@ -696,7 +690,7 @@ def main(user_input=None):
             pyplot.show()
             
             # ask for re-annotation (i.e. reprojection is not good)
-            reannotate = raw_input("Want to re-annotate IR ? [y/n]: ")
+            reannotate = input("Want to re-annotate IR ? [y/n]: ")
             if reannotate == 'y':
               
               # get eyes position in the IR frame
