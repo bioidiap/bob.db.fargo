@@ -45,12 +45,11 @@ version = pkg_resources.require('bob.db.fargo')[0].version
 
 import numpy
 import subprocess
-
 import bob.io.video
 import bob.io.base
 import bob.io.image
-import bob.ip.color
 
+from bob.db.fargo.utils import load_timestamps
 
 def find_closest_frame_index(color_time, other_timestamps):
   """ finds the closest (depth or NIR) frame to the current (color) frame.
