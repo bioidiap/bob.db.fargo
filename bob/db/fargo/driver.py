@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
-# Thu 22 Dec 16:23:51 CET 2016
-
 
 """Commands the FARGO database can respond to.
 """

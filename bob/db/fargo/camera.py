@@ -1,25 +1,8 @@
+#!/usr/bin/env python
+# vim: set fileencoding=utf-8 :
+
 import json
-
 import numpy as np
-import cv2
-
-
-#def depth_to_rgb(depth_frame, min_depth_value, max_depth_value,
-#                 colormap=cv2.COLORMAP_HSV, range_min=None, range_max=None):
-#  """
-#  
-#  """
-#  valid_mask = cv2.inRange(depth_frame, min_depth_value, max_depth_value)
-#  if range_min is None or range_max is None:
-#      range_min, range_max, _, _ = cv2.minMaxLoc(depth_frame, valid_mask)
-#  if range_max != range_min:
-#      scale = np.iinfo(np.uint8).max / (range_max - range_min)
-#  else:
-#      scale = 1.0
-#  depth_frame_view = cv2.convertScaleAbs(depth_frame, alpha=scale,
-#                                         beta=-scale * range_min)
-#  return cv2.applyColorMap(depth_frame_view, colormap)
-
 
 def points_to_color(points, intrinsics):
     x = points[0] / points[2]
