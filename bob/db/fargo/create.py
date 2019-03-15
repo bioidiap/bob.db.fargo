@@ -6,7 +6,6 @@ from .models import *
 
 from bob.db.base.driver import Interface as BaseInterface
 
-
 import bob.core
 logger = bob.core.log.setup('bob.db.fargo')
 
@@ -52,7 +51,6 @@ def add_files(session, imagesdir, extension='.png'):
     The extension of the image file.
 
   """
-
   for root, dirs, files in os.walk(imagesdir, topdown=False):
     for name in files:
       image_filename = os.path.join(root, name)
