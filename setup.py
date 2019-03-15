@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # encoding: utf-8
-# Guillaume HEUSCH <guillaume.heusch@idiap.ch>
-# Mon 21 Nov 08:21:19 CET 2016
 
 from setuptools import setup, find_packages, dist
 dist.Distribution(dict(setup_requires=['bob.extension']))
@@ -34,21 +32,7 @@ setup(
     entry_points = {
         'console_scripts': [
           'bob_db_fargo_extract_images_frontal.py = bob.db.fargo.scripts.extract_images_frontal:main',
-          'extract_poses.py = bob.db.fargo.scripts.extract_poses:main',
-          'make_public_lists.py = bob.db.fargo.scripts.make_public_lists:main',
-          'make_pose_lists.py = bob.db.fargo.scripts.make_pose_lists:main',
-          'bob_db_fargo_extract_eyes_center.py = bob.db.fargo.scripts.extract_eyes_center:main',
-          'eyes_center_from_landmarks.py = bob.db.fargo.scripts.eyes_center_from_landmarks:main',
-          'convert_ir_and_depth.py = bob.db.fargo.scripts.convert_ir_and_depth:main',
-          'reencode_color.py = bob.db.fargo.scripts.reencode_color:main',
-          'detect_faces_fargo.py = bob.db.fargo.scripts.detect_faces_fargo:main',
-          'detect_faces_fargo_for_pose.py = bob.db.fargo.scripts.detect_faces_fargo_for_pose:main',
-          'crop_faces.py = bob.db.fargo.scripts.crop_faces:main',
-          'crop_faces_for_article.py = bob.db.fargo.scripts.crop_faces_for_article:main',
-          'extract_images_pose_varying.py = bob.db.fargo.scripts.extract_images_pose_varying:main',
-          'make_pose_lists_pitch_yaw.py = bob.db.fargo.scripts.make_pose_lists_pitch_yaw:main',
-          'detect_faces_fargo_pose_varying.py = bob.db.fargo.scripts.detect_faces_fargo_pose_varying:main',
-          'crop_faces_for_article_poses.py = bob.db.fargo.scripts.crop_faces_for_article_poses:main',
+          'bob_db_fargo_extract_images_pose_varying.py = bob.db.fargo.scripts.extract_images_pose_varying:main',
         ],
         
         'bob.db': [
