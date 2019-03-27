@@ -246,4 +246,7 @@ class Database(bob.db.base.SQLiteDatabase):
         q = q.order_by(File.client_id)
         retval += list(q)
 
-    return list(set(retval))  # To remove duplicates
+    # remove duplicates and sort the list
+    rv = list(set(retval))
+    rv.sort()
+    return rv
