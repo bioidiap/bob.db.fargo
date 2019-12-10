@@ -291,7 +291,7 @@ def main(user_input=None):
               pass
 
           # process color file
-          color_file = os.path.join(color_dir, 'color.264')
+          color_file = os.path.join(color_dir, 'color.mov')
           if os.path.isfile(color_file):
             color_stream = bob.io.video.reader(color_file)
           else:
